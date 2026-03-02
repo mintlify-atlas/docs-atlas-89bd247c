@@ -1,0 +1,348 @@
+---
+title: Get device information
+description: Analyze the devices, browsers, and operating systems used by visitors
+---
+
+The device information endpoint provides detailed breakdowns of the hardware and software your visitors use to access your redirects, including device types, operating systems, and browsers.
+
+## Endpoint
+
+```
+GET /analytics/redirect/:redirectId/stats/devices
+```
+
+## Function signature
+
+```typescript
+getDeviceInfo(
+  redirectId: string,
+  params?: { start?: string; end?: string }
+): Promise<AxiosResponse>
+```
+
+## Path parameters
+
+<ParamField path="redirectId" type="string" required>
+  The unique identifier of the redirect to retrieve device information for
+</ParamField>
+
+## Query parameters
+
+<ParamField query="start" type="string">
+  Start date for the analytics period in ISO 8601 format
+  
+  Example: `2024-01-01T00:00:00Z`
+</ParamField>
+
+<ParamField query="end" type="string">
+  End date for the analytics period in ISO 8601 format
+  
+  Example: `2024-01-31T23:59:59Z`
+</ParamField>
+
+<Note>
+  Device information is parsed from the User-Agent header. Results may vary for clients that modify or obscure their user agent strings.
+</Note>
+
+## Response
+
+The endpoint returns comprehensive device analytics organized by category:
+
+<ResponseField name="data" type="object">
+  <Expandable title="properties">
+    <ResponseField name="devices" type="array">
+      Device type breakdown
+      
+      <Expandable title="item properties">
+        <ResponseField name="type" type="string">
+          Device type: `mobile`, `desktop`, `tablet`, `tv`, `console`, `wearable`, or `unknown`
+        </ResponseField>
+
+        <ResponseField name="hits" type="number">
+          Number of hits from this device type
+        </ResponseField>
+
+        <ResponseField name="percentage" type="number">
+          Percentage of total traffic from this device type
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+
+    <ResponseField name="operatingSystems" type="array">
+      Operating system breakdown
+      
+      <Expandable title="item properties">
+        <ResponseField name="name" type="string">
+          Operating system name (e.g., `Windows`, `macOS`, `iOS`, `Android`)
+        </ResponseField>
+
+        <ResponseField name="version" type="string">
+          OS version (e.g., `11`, `14.5`, `Ventura`)
+        </ResponseField>
+
+        <ResponseField name="hits" type="number">
+          Number of hits from this OS
+        </ResponseField>
+
+        <ResponseField name="percentage" type="number">
+          Percentage of total traffic from this OS
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+
+    <ResponseField name="browsers" type="array">
+      Browser breakdown
+      
+      <Expandable title="item properties">
+        <ResponseField name="name" type="string">
+          Browser name (e.g., `Chrome`, `Safari`, `Firefox`, `Edge`)
+        </ResponseField>
+
+        <ResponseField name="version" type="string">
+          Browser version
+        </ResponseField>
+
+        <ResponseField name="hits" type="number">
+          Number of hits from this browser
+        </ResponseField>
+
+        <ResponseField name="percentage" type="number">
+          Percentage of total traffic from this browser
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+
+    <ResponseField name="summary" type="object">
+      <Expandable title="properties">
+        <ResponseField name="mobilePercentage" type="number">
+          Percentage of traffic from mobile devices
+        </ResponseField>
+
+        <ResponseField name="desktopPercentage" type="number">
+          Percentage of traffic from desktop devices
+        </ResponseField>
+
+        <ResponseField name="topDevice" type="string">
+          Most common device type
+        </ResponseField>
+
+        <ResponseField name="topOS" type="string">
+          Most common operating system
+        </ResponseField>
+
+        <ResponseField name="topBrowser" type="string">
+          Most common browser
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="meta" type="object">
+  <Expandable title="properties">
+    <ResponseField name="redirectId" type="string">
+      The redirect ID for which data was retrieved
+    </ResponseField>
+
+    <ResponseField name="period" type="object">
+      <Expandable title="properties">
+        <ResponseField name="start" type="string">
+          Start of the analyzed period
+        </ResponseField>
+
+        <ResponseField name="end" type="string">
+          End of the analyzed period
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example request
+
+<CodeGroup>
+
+```typescript TypeScript
+import { getDeviceInfo } from '@quickleap/api';
+
+const response = await getDeviceInfo('redirect_abc123', {
+  start: '2024-01-01T00:00:00Z',
+  end: '2024-01-31T23:59:59Z'
+});
+
+const { devices, operatingSystems, browsers, summary } = response.data.data;
+
+console.log(`Mobile traffic: ${summary.mobilePercentage}%`);
+console.log(`Desktop traffic: ${summary.desktopPercentage}%`);
+console.log(`Top browser: ${summary.topBrowser}`);
+
+// Display device breakdown
+devices.forEach(device => {
+  console.log(`${device.type}: ${device.hits} hits (${device.percentage}%)`);
+});
+```
+
+```javascript JavaScript
+const { getDeviceInfo } = require('@quickleap/api');
+
+getDeviceInfo('redirect_abc123', {
+  start: '2024-01-01T00:00:00Z',
+  end: '2024-01-31T23:59:59Z'
+}).then(response => {
+  const data = response.data.data;
+  
+  console.log('Top 5 browsers:');
+  data.browsers.slice(0, 5).forEach(browser => {
+    console.log(`${browser.name} ${browser.version}: ${browser.percentage}%`);
+  });
+});
+```
+
+```bash cURL
+curl -X GET \
+  'https://api.quickleap.com/analytics/redirect/redirect_abc123/stats/devices?start=2024-01-01T00:00:00Z&end=2024-01-31T23:59:59Z' \
+  -H 'Authorization: Bearer YOUR_API_KEY' \
+  -H 'Content-Type: application/json'
+```
+
+```python Python
+import requests
+import matplotlib.pyplot as plt
+
+response = requests.get(
+  'https://api.quickleap.com/analytics/redirect/redirect_abc123/stats/devices',
+  params={
+    'start': '2024-01-01T00:00:00Z',
+    'end': '2024-01-31T23:59:59Z'
+  },
+  headers={'Authorization': 'Bearer YOUR_API_KEY'}
+)
+
+data = response.json()['data']
+
+# Create pie chart of device types
+devices = data['devices']
+labels = [d['type'] for d in devices]
+sizes = [d['hits'] for d in devices]
+
+plt.pie(sizes, labels=labels, autopct='%1.1f%%')
+plt.title('Traffic by Device Type')
+plt.show()
+```
+
+</CodeGroup>
+
+## Example response
+
+```json
+{
+  "data": {
+    "devices": [
+      {
+        "type": "mobile",
+        "hits": 25678,
+        "percentage": 56.2
+      },
+      {
+        "type": "desktop",
+        "hits": 18234,
+        "percentage": 39.9
+      },
+      {
+        "type": "tablet",
+        "hits": 1766,
+        "percentage": 3.9
+      }
+    ],
+    "operatingSystems": [
+      {
+        "name": "iOS",
+        "version": "17",
+        "hits": 14532,
+        "percentage": 31.8
+      },
+      {
+        "name": "Android",
+        "version": "14",
+        "hits": 11234,
+        "percentage": 24.6
+      },
+      {
+        "name": "Windows",
+        "version": "11",
+        "hits": 10456,
+        "percentage": 22.9
+      },
+      {
+        "name": "macOS",
+        "version": "Sonoma",
+        "hits": 7234,
+        "percentage": 15.8
+      }
+    ],
+    "browsers": [
+      {
+        "name": "Chrome",
+        "version": "120",
+        "hits": 22345,
+        "percentage": 48.9
+      },
+      {
+        "name": "Safari",
+        "version": "17",
+        "hits": 15678,
+        "percentage": 34.3
+      },
+      {
+        "name": "Firefox",
+        "version": "121",
+        "hits": 4532,
+        "percentage": 9.9
+      },
+      {
+        "name": "Edge",
+        "version": "120",
+        "hits": 3123,
+        "percentage": 6.8
+      }
+    ],
+    "summary": {
+      "mobilePercentage": 56.2,
+      "desktopPercentage": 39.9,
+      "topDevice": "mobile",
+      "topOS": "iOS 17",
+      "topBrowser": "Chrome 120"
+    }
+  },
+  "meta": {
+    "redirectId": "redirect_abc123",
+    "period": {
+      "start": "2024-01-01T00:00:00Z",
+      "end": "2024-01-31T23:59:59Z"
+    }
+  }
+}
+```
+
+## Use cases
+
+- **Responsive design**: Understand device distribution to prioritize mobile or desktop experiences
+- **Browser testing**: Identify which browser versions to test and support
+- **OS compatibility**: Ensure your destination pages work well on the most common operating systems
+- **Performance optimization**: Optimize for the most common device types
+- **Feature detection**: Determine which modern web features are safe to use based on browser distribution
+- **App deep linking**: Adjust mobile redirect strategies based on iOS vs Android distribution
+
+## Best practices
+
+- **Mobile-first approach**: With mobile traffic often exceeding 50%, ensure your redirects work well on mobile devices
+- **Version awareness**: Pay attention to browser and OS versions to avoid compatibility issues
+- **Regular monitoring**: Device trends change over time. Review this data quarterly
+- **Cross-reference**: Combine device data with geographic and time-series analytics for deeper insights
+
+## Related endpoints
+
+- [Get device categories](/api/analytics/overview) - Simplified mobile/desktop/tablet breakdown
+- [Get browser families](/api/analytics/overview) - Browser data grouped by family
+- [Get user agent analytics](/api/analytics/overview) - Raw user agent string analysis
+- [Get basic statistics](/api/analytics/basic-stats) - Overall traffic metrics

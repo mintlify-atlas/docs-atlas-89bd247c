@@ -1,0 +1,310 @@
+---
+title: Traffic analytics and insights
+description: Comprehensive analytics dashboard with geographic data, device information, referrer tracking, and real-time traffic insights
+---
+
+Quickleap provides detailed analytics for every redirect, giving you deep insights into your traffic patterns, user behavior, and redirect performance.
+
+## Dashboard overview
+
+The analytics dashboard provides a comprehensive summary of your redirect performance, including:
+
+- Total hits and traffic trends over time
+- Geographic distribution of visitors
+- Device and browser breakdowns
+- Top referral sources
+- Peak traffic patterns
+- Status code distribution
+
+<Info>
+Analytics are collected based on your redirect's sampling rate. A 100% sampling rate captures all traffic, while lower rates provide statistically representative samples.
+</Info>
+
+## Core analytics
+
+<CardGroup cols={2}>
+  <Card title="Basic statistics" icon="chart-simple">
+    View essential metrics including total hits, unique visitors, and redirect success rates for any time period.
+  </Card>
+  <Card title="Hits over time" icon="chart-line">
+    Track traffic patterns with customizable time intervals (hourly, daily, weekly) to identify trends and spikes.
+  </Card>
+  <Card title="Dashboard summary" icon="gauge">
+    Access a comprehensive overview combining all key metrics in a single, actionable view.
+  </Card>
+  <Card title="Period comparison" icon="arrow-right-arrow-left">
+    Compare traffic between different time periods to measure growth and identify changes.
+  </Card>
+</CardGroup>
+
+## Geographic analytics
+
+Understand where your traffic originates with detailed geographic breakdowns.
+
+### Available geographic data
+
+- **Country-level data**: See which countries generate the most traffic
+- **Region breakdowns**: Drill down to state or province level
+- **City-level insights**: Identify specific cities driving traffic
+- **Grouped views**: Aggregate data by country, region, or city
+
+<Tabs>
+  <Tab title="Country view">
+    View traffic distribution across countries with total hits and percentage breakdowns. Ideal for understanding your global reach.
+  </Tab>
+  <Tab title="Region view">
+    Analyze traffic by state, province, or region within countries. Useful for regional marketing campaigns.
+  </Tab>
+  <Tab title="City view">
+    Identify specific cities generating traffic. Perfect for local targeting and geo-specific campaigns.
+  </Tab>
+</Tabs>
+
+**Use cases:**
+- Target marketing campaigns to high-traffic regions
+- Identify expansion opportunities in new geographic areas
+- Verify that geo-targeted campaigns reach the intended audience
+- Optimize content delivery based on geographic distribution
+
+## Device and browser analytics
+
+Gain insights into the devices and browsers your visitors use.
+
+### Device information
+
+<Accordion title="Device types">
+  See the breakdown between desktop, mobile, and tablet traffic. Essential for responsive design decisions and mobile optimization.
+</Accordion>
+
+<Accordion title="Device categories">
+  Detailed categorization of device types including smartphones, tablets, desktops, and other device categories.
+</Accordion>
+
+<Accordion title="Device brands and models">
+  Identify specific device manufacturers (Apple, Samsung, Google, etc.) and models your visitors use.
+</Accordion>
+
+### Browser analytics
+
+<Accordion title="Browser families">
+  Track usage across major browsers (Chrome, Firefox, Safari, Edge) to ensure compatibility and optimize experiences.
+</Accordion>
+
+<Accordion title="Browser versions">
+  Monitor specific browser versions to identify when users are on outdated browsers that may need special handling.
+</Accordion>
+
+<Accordion title="User agents">
+  Access raw user agent data for advanced analysis and debugging.
+</Accordion>
+
+### Operating system data
+
+- **OS names**: Track Windows, macOS, iOS, Android, Linux distributions
+- **OS versions**: Identify specific operating system versions
+- **Platform compatibility**: Ensure your destination sites work across all platforms
+
+<Note>
+Device and browser analytics help you optimize your destination pages for your actual audience's technology stack.
+</Note>
+
+## Traffic source analytics
+
+### Referrer tracking
+
+Understand where your traffic comes from with comprehensive referrer analytics:
+
+- **Full referrer URLs**: See complete referring URLs
+- **Referrer domains**: Group traffic by referring domain
+- **Top referrers**: Identify your most valuable traffic sources
+- **Direct vs. referred**: Distinguish between direct visits and referred traffic
+
+**Key use cases:**
+- Measure the effectiveness of marketing campaigns
+- Identify unexpected traffic sources
+- Track backlink performance
+- Optimize partnerships with high-performing referrers
+
+### Campaign analytics
+
+Track marketing campaign performance through UTM parameter analysis:
+
+- UTM source tracking
+- UTM medium identification
+- UTM campaign names
+- UTM term and content parameters
+
+<Info>
+Enable query forwarding on your redirects to preserve UTM parameters and get accurate campaign tracking.
+</Info>
+
+## Temporal analytics
+
+### Hourly traffic patterns
+
+Analyze traffic distribution across 24 hours to identify:
+
+- Peak traffic hours
+- Low-traffic periods for maintenance
+- Geographic timezone patterns
+- Optimal posting/campaign launch times
+
+### Time-based insights
+
+- **Hour of day distribution**: See when your redirects get the most hits
+- **Day of week patterns**: Identify weekday vs. weekend traffic differences
+- **Peak traffic analysis**: Automatically identify your highest-traffic periods
+- **Historical trends**: Track changes in traffic patterns over time
+
+<Accordion title="Example: Identifying peak hours">
+  The peak traffic analytics endpoint reveals:
+  - Your busiest hour of the day
+  - Your highest-traffic day of the week
+  - Peak vs. average traffic comparisons
+  - Optimal times for campaigns or updates
+</Accordion>
+
+## URL and path analytics
+
+### Path tracking
+
+When path forwarding is enabled, track which paths receive the most traffic:
+
+- Most visited paths
+- Path-level hit counts
+- Path distribution percentages
+- Uncommon or error paths
+
+### Query parameter analytics
+
+Analyze query parameters to understand:
+
+- Common parameter combinations
+- Parameter usage frequency
+- Custom tracking parameter performance
+- Parameter-based segmentation
+
+### Destination URL analysis
+
+For redirects with rules or dynamic destinations, track:
+
+- Which destination URLs receive the most traffic
+- Distribution across multiple destinations
+- Rule-based routing effectiveness
+- A/B test variant performance
+
+## Technical analytics
+
+<CardGroup cols={2}>
+  <Card title="Status codes" icon="signal">
+    Monitor HTTP status code distribution to identify successful redirects (3xx), errors (4xx, 5xx), and other responses.
+  </Card>
+  <Card title="Bot detection" icon="robot">
+    Distinguish between human traffic and bot traffic to get accurate visitor counts and prevent bot skewing.
+  </Card>
+  <Card title="Language preferences" icon="language">
+    Track browser language settings to understand your audience's language preferences.
+  </Card>
+  <Card title="Return visitors" icon="arrows-rotate">
+    Identify returning visitors vs. new visitors to measure engagement and retention.
+  </Card>
+</CardGroup>
+
+### Error analytics
+
+Monitor and troubleshoot redirect errors:
+
+- Failed redirect attempts
+- Error status code distribution
+- Error patterns over time
+- Common error causes
+
+<Warning>
+High error rates may indicate DNS configuration issues, destination URL problems, or rule configuration errors. Monitor error analytics regularly.
+</Warning>
+
+## Advanced analytics
+
+### Raw hit data
+
+Access individual redirect hits with detailed filtering:
+
+- Paginated hit records
+- Filter by country, device, status code
+- Bot filtering (include or exclude bot traffic)
+- Date range filtering
+- Export capabilities for further analysis
+
+**Available filters:**
+- `country`: Filter by specific country codes
+- `isBot`: Include or exclude bot traffic
+- `statusCode`: Filter by HTTP status code
+- `start` and `end`: Date range selection
+- `page` and `limit`: Pagination controls
+
+### Return visitor analysis
+
+Track visitor loyalty and engagement:
+
+- New visitor counts
+- Returning visitor counts
+- Return rate percentages
+- Visitor retention patterns
+
+<Note>
+Return visitor tracking uses anonymous identifiers and respects user privacy while providing valuable engagement insights.
+</Note>
+
+## Time range selection
+
+All analytics endpoints support flexible time range selection:
+
+- **Default**: Last 7 days
+- **Custom ranges**: Specify start and end dates
+- **Interval options**: Hour, day, week, or month grouping
+- **Comparison mode**: Compare two time periods side-by-side
+
+<Tabs>
+  <Tab title="Last 7 days">
+    Quick view of recent performance - the default for most analytics views
+  </Tab>
+  <Tab title="Last 30 days">
+    Monthly overview for trend analysis and reporting
+  </Tab>
+  <Tab title="Custom range">
+    Select specific start and end dates for precise analysis
+  </Tab>
+  <Tab title="Comparison">
+    Compare this week to last week, this month to last month, or any custom periods
+  </Tab>
+</Tabs>
+
+## Export and integration
+
+While Quickleap provides a comprehensive analytics dashboard, you can also:
+
+- Access raw hit data via the API
+- Export analytics for external analysis
+- Integrate with business intelligence tools
+- Build custom reports using the analytics API
+
+<Info>
+All analytics data is available through the Quickleap API. See the API documentation for integration details.
+</Info>
+
+## Best practices
+
+<CardGroup cols={2}>
+  <Card title="Monitor regularly" icon="calendar-check">
+    Check analytics weekly to identify trends, catch issues early, and optimize redirect performance.
+  </Card>
+  <Card title="Use appropriate sampling" icon="percent">
+    Balance analytics detail with performance by adjusting sampling rates based on traffic volume.
+  </Card>
+  <Card title="Track campaigns" icon="bullseye">
+    Use UTM parameters and enable query forwarding to measure marketing campaign effectiveness.
+  </Card>
+  <Card title="Compare periods" icon="code-compare">
+    Use period comparison to measure growth, identify seasonal patterns, and track improvement.
+  </Card>
+</CardGroup>

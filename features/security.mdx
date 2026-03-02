@@ -1,0 +1,336 @@
+---
+title: HTTPS and security features
+description: Automatic SSL certificate provisioning, encrypted redirects, data privacy, and security best practices for domain redirects
+---
+
+Quickleap prioritizes security for all redirects with automatic HTTPS, SSL certificate management, and privacy-focused analytics.
+
+## HTTPS by default
+
+All Quickleap redirects use HTTPS for secure, encrypted connections.
+
+<CardGroup cols={2}>
+  <Card title="Automatic SSL certificates" icon="certificate">
+    Every custom domain gets a free SSL certificate, automatically provisioned and renewed.
+  </Card>
+  <Card title="Encrypted redirects" icon="lock">
+    All redirect traffic is encrypted in transit, protecting user privacy and data.
+  </Card>
+  <Card title="HTTP to HTTPS upgrade" icon="arrow-up">
+    HTTP requests are automatically upgraded to HTTPS for maximum security.
+  </Card>
+  <Card title="No configuration needed" icon="circle-check">
+    HTTPS works automatically - no certificates to buy or configure.
+  </Card>
+</CardGroup>
+
+## SSL certificate management
+
+Quickleap handles all aspects of SSL certificate lifecycle management.
+
+### Automatic provisioning
+
+When you connect a custom domain:
+
+1. **DNS verification**: Quickleap verifies your DNS is configured correctly
+2. **Certificate request**: An SSL certificate is automatically requested
+3. **Domain validation**: Domain ownership is validated via DNS
+4. **Certificate installation**: Certificate is installed and activated
+5. **HTTPS enabled**: Your redirect immediately uses HTTPS
+
+<Info>
+The entire SSL provisioning process typically takes 5-10 minutes after DNS verification.
+</Info>
+
+### Automatic renewal
+
+SSL certificates are automatically renewed before expiration:
+
+- Certificates are monitored continuously
+- Renewal begins 30 days before expiration
+- Zero downtime during renewal
+- No action required from you
+
+<Note>
+You'll never experience certificate expiration issues. Quickleap handles all renewals automatically.
+</Note>
+
+### Certificate coverage
+
+Each SSL certificate covers:
+
+- Your specific domain (e.g., example.com)
+- The www variant if applicable (e.g., www.example.com)
+- Wildcards are used for broad coverage when appropriate
+
+## Data encryption
+
+### In-transit encryption
+
+All redirect traffic is encrypted:
+
+- **TLS 1.2+**: Modern, secure encryption protocols
+- **Strong ciphers**: Industry-standard encryption algorithms
+- **Perfect forward secrecy**: Each session uses unique encryption keys
+- **HSTS ready**: Support for HTTP Strict Transport Security
+
+### Analytics data
+
+Analytics data is collected and stored securely:
+
+- Encrypted in transit to Quickleap servers
+- Encrypted at rest in secure databases
+- Access controlled with authentication
+- Regular security audits
+
+<Info>
+Quickleap collects only necessary analytics data and does not sell or share user data with third parties.
+</Info>
+
+## Privacy features
+
+### IP address handling
+
+IP addresses are processed with privacy in mind:
+
+- Used only for geographic and analytics purposes
+- Not shared with third parties
+- Can be excluded from analytics via sampling rate
+- Support for privacy-focused configurations
+
+### Analytics sampling
+
+Control analytics data collection with sampling rates:
+
+- Set sampling to **0%** to disable all tracking
+- Use **lower percentages** for privacy-sensitive redirects
+- **100%** sampling for complete data (default)
+
+<Note>
+Reducing the sampling rate reduces data collection while maintaining redirect functionality.
+</Note>
+
+### No persistent tracking
+
+Quickleap's analytics approach:
+
+- No long-term cookies placed on user devices
+- No cross-site tracking
+- No user profiling across domains
+- Anonymous traffic analysis
+
+### Return visitor detection
+
+Return visitor analytics use privacy-preserving methods:
+
+- Short-term, anonymous identifiers
+- No personally identifiable information (PII)
+- Automatic expiration of visitor data
+- Aggregate statistics only
+
+## Security best practices
+
+<CardGroup cols={2}>
+  <Card title="Use permanent redirects carefully" icon="link">
+    Permanent (301) redirects are cached by browsers. Ensure destinations are correct before using permanent redirects.
+  </Card>
+  <Card title="Verify DNS configuration" icon="network-wired">
+    Always verify DNS records are correct. Misconfigured DNS can create security vulnerabilities.
+  </Card>
+  <Card title="Monitor redirect analytics" icon="chart-line">
+    Regularly check analytics for unusual traffic patterns that might indicate abuse or attacks.
+  </Card>
+  <Card title="Validate destination URLs" icon="magnifying-glass">
+    Ensure your destination URLs are secure (HTTPS) and under your control.
+  </Card>
+  <Card title="Use strong access controls" icon="key">
+    Enable two-factor authentication on your Quickleap account to prevent unauthorized access.
+  </Card>
+  <Card title="Review rules regularly" icon="clipboard-check">
+    Audit redirect rules periodically to ensure they behave as intended and haven't been misconfigured.
+  </Card>
+</CardGroup>
+
+## DDoS protection
+
+Quickleap's infrastructure includes built-in DDoS protection:
+
+- Distributed redirect infrastructure
+- Rate limiting to prevent abuse
+- Automatic traffic filtering
+- Scalable architecture handles traffic spikes
+
+<Info>
+Quickleap's infrastructure is designed to handle high traffic volumes and resist distributed denial-of-service attacks.
+</Info>
+
+## Bot detection
+
+Intelligent bot detection protects analytics accuracy:
+
+- **Automatic bot identification**: Detects common bots and crawlers
+- **Separate bot analytics**: View bot traffic separately from human traffic
+- **Filter options**: Include or exclude bots from analytics
+- **Legitimate bots allowed**: Search engine crawlers are handled appropriately
+
+<Note>
+Bot detection ensures your analytics reflect real human traffic while still allowing legitimate bots like search engine crawlers.
+</Note>
+
+## Compliance and standards
+
+### Industry standards
+
+Quickleap follows security best practices:
+
+- **OWASP guidelines**: Web application security standards
+- **TLS best practices**: Modern encryption protocols and ciphers
+- **Regular updates**: Infrastructure patched and updated regularly
+- **Security monitoring**: Continuous monitoring for vulnerabilities
+
+### Privacy regulations
+
+Quickleap is designed with privacy regulations in mind:
+
+- **GDPR considerations**: Privacy-focused analytics collection
+- **Minimal data collection**: Only necessary data is collected
+- **Data retention policies**: Old analytics data is expired automatically
+- **User control**: Sampling rates give you control over data collection
+
+<Warning>
+While Quickleap provides privacy-focused features, you are responsible for ensuring your redirect usage complies with applicable privacy laws and regulations.
+</Warning>
+
+## Access control
+
+### Account security
+
+Protect your Quickleap account:
+
+- **Strong passwords**: Use unique, complex passwords
+- **Two-factor authentication**: Enable 2FA for additional security
+- **Session management**: Automatic logout after inactivity
+- **Login monitoring**: Track account access and login attempts
+
+### API security
+
+If using the Quickleap API:
+
+- **API keys**: Secure authentication tokens
+- **HTTPS only**: All API calls must use HTTPS
+- **Rate limiting**: Protection against API abuse
+- **Scope controls**: Limit API access to necessary operations
+
+## Secure redirect patterns
+
+### Validating destination URLs
+
+Ensure your destination URLs are secure:
+
+<Tabs>
+  <Tab title="Secure destinations">
+    ✅ **Use these:**
+    - `https://example.com` - HTTPS destination
+    - `https://trusted-domain.com` - Domains you control
+    - `https://verified-partner.com` - Verified partner sites
+  </Tab>
+  <Tab title="Avoid these">
+    ❌ **Avoid these:**
+    - `http://insecure-site.com` - Unencrypted HTTP
+    - User-supplied URLs without validation
+    - Destinations you don't control or trust
+    - Open redirect patterns
+  </Tab>
+</Tabs>
+
+<Warning>
+Never redirect to user-supplied URLs without validation. This can create open redirect vulnerabilities.
+</Warning>
+
+### Open redirect prevention
+
+Quickleap prevents open redirect vulnerabilities:
+
+- Destination URLs are configured by you, not users
+- No dynamic destination selection from URL parameters
+- Rule-based routing uses predefined destinations
+- All destinations are validated before redirect creation
+
+## Monitoring and alerts
+
+### Security monitoring
+
+Monitor your redirects for security issues:
+
+- **Error analytics**: Track failed redirects and errors
+- **Traffic patterns**: Identify unusual traffic spikes
+- **Status codes**: Monitor for unexpected 4xx or 5xx responses
+- **Bot traffic**: Watch for abnormal bot activity
+
+### Anomaly detection
+
+Watch for signs of issues:
+
+- Sudden traffic spikes (potential DDoS)
+- High error rates (configuration issues)
+- Unusual geographic patterns (potential abuse)
+- Bot traffic surges (crawler storms)
+
+<Info>
+Regular analytics review helps you catch and respond to security issues quickly.
+</Info>
+
+## Data retention
+
+Quickleap's data retention policies:
+
+- **Analytics data**: Retained based on your plan (typically 90 days to 1 year)
+- **Configuration data**: Retained while redirect is active
+- **Deleted redirects**: Analytics deleted after redirect deletion
+- **Account deletion**: All data removed when account is closed
+
+<Note>
+You can delete redirects and their analytics data at any time from your dashboard.
+</Note>
+
+## Incident response
+
+If you notice suspicious activity:
+
+1. **Pause the redirect**: Temporarily disable suspicious redirects
+2. **Review analytics**: Check for unusual patterns in traffic data
+3. **Check configuration**: Verify redirect settings haven't been modified
+4. **Update credentials**: Change your password if account compromise is suspected
+5. **Contact support**: Reach out to Quickleap support for assistance
+
+## Security checklist
+
+Use this checklist to maintain security:
+
+- [ ] Enable two-factor authentication on your account
+- [ ] Use HTTPS destinations whenever possible
+- [ ] Review redirect configurations monthly
+- [ ] Monitor analytics for unusual patterns
+- [ ] Keep destination URLs under your control
+- [ ] Set appropriate sampling rates for privacy
+- [ ] Verify DNS configuration is correct
+- [ ] Check SSL certificate status regularly (though it auto-renews)
+- [ ] Document all redirect purposes and configurations
+- [ ] Remove unused redirects promptly
+
+## Additional resources
+
+<CardGroup cols={2}>
+  <Card title="Custom domains" icon="globe" href="/features/custom-domains">
+    Learn about DNS configuration and domain security
+  </Card>
+  <Card title="Analytics" icon="chart-line" href="/features/analytics">
+    Understanding analytics data and privacy controls
+  </Card>
+  <Card title="Rules engine" icon="gears" href="/features/rules">
+    Secure configuration of conditional redirects
+  </Card>
+  <Card title="Support" icon="life-ring">
+    Contact support for security questions or concerns
+  </Card>
+</CardGroup>

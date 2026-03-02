@@ -1,0 +1,268 @@
+---
+title: Get hits over time
+description: Analyze redirect traffic patterns with time-series data
+---
+
+The time series endpoint provides granular analytics data aggregated over customizable time intervals, enabling you to visualize traffic trends and identify patterns.
+
+## Endpoint
+
+```
+GET /analytics/redirect/:redirectId/stats/time
+```
+
+## Function signature
+
+```typescript
+getHitsOverTime(
+  redirectId: string,
+  params?: { start?: string; end?: string; interval?: string }
+): Promise<AxiosResponse>
+```
+
+## Path parameters
+
+<ParamField path="redirectId" type="string" required>
+  The unique identifier of the redirect to retrieve time-series data for
+</ParamField>
+
+## Query parameters
+
+<ParamField query="start" type="string">
+  Start date for the analytics period in ISO 8601 format
+  
+  Example: `2024-01-01T00:00:00Z`
+</ParamField>
+
+<ParamField query="end" type="string">
+  End date for the analytics period in ISO 8601 format
+  
+  Example: `2024-01-31T23:59:59Z`
+</ParamField>
+
+<ParamField query="interval" type="string">
+  Time interval for aggregating hits. Determines the granularity of the returned data.
+  
+  Available values:
+  - `hour` - Hourly aggregation
+  - `day` - Daily aggregation (default)
+  - `week` - Weekly aggregation
+  - `month` - Monthly aggregation
+</ParamField>
+
+<Note>
+  Choose an interval appropriate for your date range. For example, use `hour` for same-day analysis, `day` for weekly/monthly views, and `month` for yearly overviews.
+</Note>
+
+## Response
+
+The endpoint returns a time-series array with hit counts for each interval:
+
+<ResponseField name="data" type="object">
+  <Expandable title="properties">
+    <ResponseField name="timeSeries" type="array">
+      Array of data points, each representing one time interval
+      
+      <Expandable title="item properties">
+        <ResponseField name="timestamp" type="string">
+          ISO 8601 timestamp representing the start of this interval
+        </ResponseField>
+
+        <ResponseField name="hits" type="number">
+          Total number of hits during this interval
+        </ResponseField>
+
+        <ResponseField name="uniqueVisitors" type="number">
+          Number of unique visitors during this interval
+        </ResponseField>
+
+        <ResponseField name="botHits" type="number">
+          Number of bot hits during this interval
+        </ResponseField>
+
+        <ResponseField name="humanHits" type="number">
+          Number of human hits during this interval
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+
+    <ResponseField name="summary" type="object">
+      <Expandable title="properties">
+        <ResponseField name="totalHits" type="number">
+          Sum of all hits across all intervals
+        </ResponseField>
+
+        <ResponseField name="averageHits" type="number">
+          Average hits per interval
+        </ResponseField>
+
+        <ResponseField name="peakHits" type="number">
+          Maximum hits in a single interval
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="meta" type="object">
+  <Expandable title="properties">
+    <ResponseField name="redirectId" type="string">
+      The redirect ID for which data was retrieved
+    </ResponseField>
+
+    <ResponseField name="interval" type="string">
+      The time interval used for aggregation
+    </ResponseField>
+
+    <ResponseField name="period" type="object">
+      <Expandable title="properties">
+        <ResponseField name="start" type="string">
+          Start of the analyzed period
+        </ResponseField>
+
+        <ResponseField name="end" type="string">
+          End of the analyzed period
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example request
+
+<CodeGroup>
+
+```typescript TypeScript
+import { getHitsOverTime } from '@quickleap/api';
+
+const response = await getHitsOverTime('redirect_abc123', {
+  start: '2024-01-01T00:00:00Z',
+  end: '2024-01-31T23:59:59Z',
+  interval: 'day'
+});
+
+const { timeSeries, summary } = response.data.data;
+
+// Plot on a chart
+timeSeries.forEach(point => {
+  console.log(`${point.timestamp}: ${point.hits} hits`);
+});
+
+console.log(`Peak: ${summary.peakHits} hits`);
+```
+
+```javascript JavaScript
+const { getHitsOverTime } = require('@quickleap/api');
+
+getHitsOverTime('redirect_abc123', {
+  start: '2024-01-01T00:00:00Z',
+  end: '2024-01-31T23:59:59Z',
+  interval: 'day'
+}).then(response => {
+  const data = response.data.data;
+  console.log('Average hits per day:', data.summary.averageHits);
+});
+```
+
+```bash cURL
+curl -X GET \
+  'https://api.quickleap.com/analytics/redirect/redirect_abc123/stats/time?start=2024-01-01T00:00:00Z&end=2024-01-31T23:59:59Z&interval=day' \
+  -H 'Authorization: Bearer YOUR_API_KEY' \
+  -H 'Content-Type: application/json'
+```
+
+```python Python
+import requests
+import matplotlib.pyplot as plt
+from datetime import datetime
+
+response = requests.get(
+  'https://api.quickleap.com/analytics/redirect/redirect_abc123/stats/time',
+  params={
+    'start': '2024-01-01T00:00:00Z',
+    'end': '2024-01-31T23:59:59Z',
+    'interval': 'day'
+  },
+  headers={'Authorization': 'Bearer YOUR_API_KEY'}
+)
+
+data = response.json()['data']
+timestamps = [point['timestamp'] for point in data['timeSeries']]
+hits = [point['hits'] for point in data['timeSeries']]
+
+# Create a time series plot
+plt.plot(timestamps, hits)
+plt.xlabel('Date')
+plt.ylabel('Hits')
+plt.title('Redirect Traffic Over Time')
+plt.show()
+```
+
+</CodeGroup>
+
+## Example response
+
+```json
+{
+  "data": {
+    "timeSeries": [
+      {
+        "timestamp": "2024-01-01T00:00:00Z",
+        "hits": 1234,
+        "uniqueVisitors": 456,
+        "botHits": 89,
+        "humanHits": 1145
+      },
+      {
+        "timestamp": "2024-01-02T00:00:00Z",
+        "hits": 1456,
+        "uniqueVisitors": 523,
+        "botHits": 102,
+        "humanHits": 1354
+      },
+      {
+        "timestamp": "2024-01-03T00:00:00Z",
+        "hits": 1678,
+        "uniqueVisitors": 601,
+        "botHits": 115,
+        "humanHits": 1563
+      }
+    ],
+    "summary": {
+      "totalHits": 45678,
+      "averageHits": 1473.5,
+      "peakHits": 3892
+    }
+  },
+  "meta": {
+    "redirectId": "redirect_abc123",
+    "interval": "day",
+    "period": {
+      "start": "2024-01-01T00:00:00Z",
+      "end": "2024-01-31T23:59:59Z"
+    }
+  }
+}
+```
+
+## Use cases
+
+- **Traffic visualization**: Create line charts and graphs showing traffic trends
+- **Pattern detection**: Identify daily, weekly, or seasonal traffic patterns
+- **Anomaly detection**: Spot unusual spikes or drops in traffic
+- **Capacity planning**: Predict future traffic based on historical trends
+- **Reporting**: Generate periodic traffic reports for stakeholders
+- **A/B testing**: Compare traffic before and after redirect changes
+
+## Best practices
+
+- **Match interval to range**: Use hourly intervals for short periods (1-7 days), daily for medium periods (1-3 months), and weekly/monthly for longer periods
+- **Caching**: Time-series data is computationally intensive. Cache results when possible
+- **Pagination**: For very long date ranges, consider breaking requests into smaller chunks
+- **Timezone awareness**: All timestamps are in UTC. Convert to local time in your application if needed
+
+## Related endpoints
+
+- [Get basic statistics](/api/analytics/basic-stats) - Summary metrics without time breakdown
+- [Get hourly traffic](/api/analytics/overview) - Specialized endpoint for hourly patterns
+- [Get peak traffic](/api/analytics/overview) - Identify peak traffic periods

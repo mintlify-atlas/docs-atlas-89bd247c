@@ -1,0 +1,489 @@
+---
+title: Account setup and configuration
+description: Complete guide to setting up your Quickleap account, configuring authentication, verifying domains, and managing DNS settings.
+---
+
+# Account setup and configuration
+
+This guide covers everything you need to configure your Quickleap account for production use, including authentication, domain verification, DNS configuration, and security settings.
+
+## Account creation
+
+### Sign up methods
+
+Quickleap offers multiple authentication options:
+
+#### Email and password
+
+1. Navigate to the Quickleap signup page
+2. Enter your email address
+3. Create a secure password
+4. Click **Create Account**
+5. You'll be logged in immediately (no email verification required)
+
+#### OAuth authentication
+
+Quickleap supports OAuth authentication with popular providers:
+
+**Google OAuth:**
+1. Click **Sign in with Google**
+2. Select your Google account
+3. Authorize Quickleap to access your profile
+4. You'll be redirected to your dashboard
+
+**GitHub OAuth:**
+1. Click **Sign in with GitHub**
+2. Authorize the Quickleap application
+3. You'll be redirected to your dashboard
+
+<Info>
+OAuth authentication provides a faster signup experience and eliminates the need to manage another password.
+</Info>
+
+### Account security
+
+Your Quickleap account is secured using industry-standard practices:
+
+- All authentication is handled through SuperTokens
+- Passwords are hashed and never stored in plain text
+- OAuth tokens are securely encrypted
+- API requests require authentication via session tokens
+- HTTPS is enforced for all connections
+
+## Domain verification
+
+Before your redirects become active, you must verify ownership of your domains. This ensures security and prevents unauthorized use of domains you don't control.
+
+### Verification process
+
+<Steps>
+  <Step title="Create a redirect">
+    First, create a redirect in your Quickleap dashboard:
+
+    1. Click **Add Redirect**
+    2. Enter your domain name in the **From domain** field
+    3. Configure your redirect settings
+    4. Click **Create Redirect**
+
+    The redirect is now created but in an **unverified** state.
+  </Step>
+
+  <Step title="Configure DNS records">
+    Update your domain's DNS settings to point to Quickleap:
+
+    ### For root domains (example.com)
+
+    Add an **A record** pointing to Quickleap's IP address:
+
+    | Type | Name | Value | TTL |
+    |------|------|-------|-----|
+    | A | @ | [Quickleap IP address] | 3600 |
+
+    ### For subdomains (www.example.com, app.example.com)
+
+    Add a **CNAME record** pointing to Quickleap's domain:
+
+    | Type | Name | Value | TTL |
+    |------|------|-------|-----|
+    | CNAME | www | [Quickleap CNAME target] | 3600 |
+
+    <Warning>
+    The exact IP address and CNAME target are provided in your Quickleap dashboard for each redirect. Copy these values carefully.
+    </Warning>
+  </Step>
+
+  <Step title="Wait for DNS propagation">
+    DNS changes can take time to propagate:
+
+    - **Minimum**: A few minutes
+    - **Maximum**: Up to 48 hours
+    - **Typical**: 1-4 hours
+
+    You can check propagation status using:
+
+    ```bash Check DNS propagation
+    # Check A record
+    nslookup example.com
+
+    # Check CNAME record
+    nslookup www.example.com
+
+    # Check from multiple locations
+    dig example.com +short @8.8.8.8
+    ```
+  </Step>
+
+  <Step title="Verify in dashboard">
+    Once DNS has propagated, verify your domain:
+
+    1. Go to your Quickleap dashboard
+    2. Find the redirect in your list
+    3. Click **Verify Domain**
+    4. Quickleap will check your DNS configuration
+    5. If successful, your domain status changes to **Verified**
+
+    You can also verify via the API:
+
+    ```javascript Verify domain via API
+    import { verifyStatus } from '@/lib/api';
+
+    const result = await verifyStatus('example.com');
+
+    if (result.data.verified) {
+      console.log('Domain verified successfully!');
+    } else {
+      console.log('Verification failed:', result.data.error);
+    }
+    ```
+  </Step>
+
+  <Step title="SSL certificate provisioning">
+    After verification, Quickleap automatically provisions SSL certificates:
+
+    - Certificates are issued via Let's Encrypt or similar CA
+    - Provisioning typically takes 5-10 minutes
+    - Certificates auto-renew before expiration
+    - Both HTTP and HTTPS work, with optional HTTPS enforcement
+
+    <Info>
+    You don't need to do anything for SSL certificates. Quickleap handles the entire process automatically.
+    </Info>
+  </Step>
+</Steps>
+
+## DNS configuration
+
+### Common DNS providers
+
+Configuration steps for popular DNS providers:
+
+#### Cloudflare
+
+1. Log in to Cloudflare
+2. Select your domain
+3. Go to **DNS** settings
+4. Click **Add record**
+5. Add the A or CNAME record as specified by Quickleap
+6. **Important**: Set the proxy status to **DNS only** (gray cloud)
+7. Save the record
+
+<Warning>
+If you use Cloudflare's proxy (orange cloud), your redirects may not work correctly. Always use **DNS only** mode.
+</Warning>
+
+#### AWS Route 53
+
+1. Open Route 53 console
+2. Select your hosted zone
+3. Click **Create record**
+4. Choose **Simple routing**
+5. Add the A or CNAME record values
+6. Set TTL to 300-3600 seconds
+7. Create the record
+
+#### Google Domains / Cloud DNS
+
+1. Go to Google Domains or Cloud DNS
+2. Select your domain
+3. Navigate to **DNS** settings
+4. Click **Manage custom records**
+5. Add the A or CNAME record
+6. Save changes
+
+#### Namecheap
+
+1. Log in to Namecheap
+2. Go to **Domain List**
+3. Click **Manage** next to your domain
+4. Go to **Advanced DNS**
+5. Add the A or CNAME record
+6. Save all changes
+
+### Advanced DNS configurations
+
+#### Multiple subdomains
+
+You can redirect multiple subdomains by creating separate records:
+
+```dns Multiple subdomain configuration
+Type    Name    Value                   TTL
+CNAME   www     redirect.quickleap.io   3600
+CNAME   app     redirect.quickleap.io   3600
+CNAME   shop    redirect.quickleap.io   3600
+```
+
+Each subdomain requires its own redirect configuration in Quickleap.
+
+#### Wildcard domains
+
+For wildcard redirects (e.g., `*.example.com`):
+
+```dns Wildcard configuration
+Type    Name    Value                   TTL
+CNAME   *       redirect.quickleap.io   3600
+```
+
+Then create a redirect in Quickleap with the wildcard pattern.
+
+<Note>
+Wildcard SSL certificates may take longer to provision (up to 30 minutes).
+</Note>
+
+## Redirect configuration
+
+### Redirect types
+
+Quickleap supports two HTTP redirect types:
+
+#### 301 - Permanent redirect
+
+```json Permanent redirect example
+{
+  "fromDomain": "old-brand.com",
+  "toDomain": "https://new-brand.com",
+  "redirectType": "permanent",
+  "pathForwarding": true,
+  "queryForwarding": true
+}
+```
+
+**Use cases:**
+- Permanent domain changes
+- Brand migrations
+- Consolidating multiple domains
+- Transferring SEO value to a new domain
+
+**SEO impact:**
+- Search engines transfer ranking signals to the new domain
+- Link equity is preserved
+- Best for long-term or permanent changes
+
+#### 302 - Temporary redirect
+
+```json Temporary redirect example
+{
+  "fromDomain": "promo.example.com",
+  "toDomain": "https://example.com/summer-sale",
+  "redirectType": "temporary",
+  "pathForwarding": false,
+  "queryForwarding": true
+}
+```
+
+**Use cases:**
+- Temporary campaigns
+- A/B testing
+- Seasonal promotions
+- Maintenance redirects
+
+**SEO impact:**
+- Search engines don't transfer ranking signals
+- Original domain retains its SEO value
+- Best for short-term or testing scenarios
+
+### Path forwarding
+
+Path forwarding preserves the URL path structure:
+
+**Enabled:**
+```
+old-domain.com/blog/post-1 → new-domain.com/blog/post-1
+old-domain.com/about       → new-domain.com/about
+old-domain.com/            → new-domain.com/
+```
+
+**Disabled:**
+```
+old-domain.com/blog/post-1 → new-domain.com
+old-domain.com/about       → new-domain.com
+old-domain.com/            → new-domain.com
+```
+
+<Info>
+Enable path forwarding when migrating a site to maintain URL structure and preserve SEO value for individual pages.
+</Info>
+
+### Query parameter forwarding
+
+Query forwarding preserves URL query parameters:
+
+**Enabled:**
+```
+old-domain.com?utm_source=email&utm_campaign=newsletter
+  → new-domain.com?utm_source=email&utm_campaign=newsletter
+
+old-domain.com/page?ref=twitter
+  → new-domain.com/page?ref=twitter
+```
+
+**Disabled:**
+```
+old-domain.com?utm_source=email&utm_campaign=newsletter
+  → new-domain.com
+
+old-domain.com/page?ref=twitter
+  → new-domain.com/page
+```
+
+<Info>
+Enable query forwarding to preserve campaign tracking parameters (UTM codes), referral codes, and other query-based functionality.
+</Info>
+
+### Analytics sampling
+
+Control what percentage of traffic is tracked for analytics:
+
+```json Sampling rate configuration
+{
+  "fromDomain": "high-traffic.com",
+  "toDomain": "https://example.com",
+  "redirectType": "permanent",
+  "samplingRate": 0.1  // Track 10% of traffic
+}
+```
+
+**Sampling rates:**
+- `1.0` - Track 100% of traffic (default, recommended for most use cases)
+- `0.5` - Track 50% of traffic
+- `0.1` - Track 10% of traffic (good for very high-traffic domains)
+- `0.01` - Track 1% of traffic
+
+<Note>
+Lowering the sampling rate reduces analytics data volume but also reduces precision. For high-traffic sites (>1M hits/day), consider using sampling to keep costs down.
+</Note>
+
+## Managing redirects
+
+### View all redirects
+
+Retrieve all your redirects via the dashboard or API:
+
+```javascript Get user redirects
+import { getUserRedirects } from '@/lib/api';
+
+const response = await getUserRedirects();
+const redirects = response.data;
+
+redirects.forEach(redirect => {
+  console.log(`${redirect.fromDomain} → ${redirect.toDomain}`);
+  console.log(`Type: ${redirect.redirectType}`);
+  console.log(`Verified: ${redirect.verified}`);
+});
+```
+
+### Update a redirect
+
+Modify an existing redirect's configuration:
+
+```javascript Update redirect
+import { updateRedirect } from '@/lib/api';
+
+const response = await updateRedirect({
+  id: 'redirect-id-123',
+  toDomain: 'https://updated-target.com',
+  redirectType: 'permanent',
+  pathForwarding: true,
+  queryForwarding: true,
+  samplingRate: 1.0
+});
+
+if (response.status === 200) {
+  console.log('Redirect updated successfully');
+}
+```
+
+<Warning>
+You cannot change the `fromDomain` after creation. If you need to redirect a different domain, create a new redirect instead.
+</Warning>
+
+### Delete a redirect
+
+Remove a redirect when no longer needed:
+
+```javascript Delete redirect
+import { deleteRedirect } from '@/lib/api';
+
+const response = await deleteRedirect('redirect-id-123');
+
+if (response.status === 200) {
+  console.log('Redirect deleted successfully');
+}
+```
+
+<Warning>
+Deleting a redirect is permanent and cannot be undone. All associated analytics data will be retained but the redirect will stop working immediately.
+</Warning>
+
+## Next steps
+
+Now that your account is configured:
+
+<CardGroup cols={2}>
+  <Card title="Create your first redirect" icon="rocket" href="/quickstart">
+    Follow the quickstart guide to set up a working redirect
+  </Card>
+  
+  <Card title="Set up advanced rules" icon="scale-balanced" href="/features/rules">
+    Create intelligent redirects based on conditions
+  </Card>
+  
+  <Card title="Explore analytics" icon="chart-line" href="/features/analytics">
+    Monitor and analyze your redirect traffic
+  </Card>
+  
+  <Card title="API integration" icon="code" href="/api/overview">
+    Automate redirect management with the API
+  </Card>
+</CardGroup>
+
+## Troubleshooting
+
+### Domain verification failing
+
+**Issue**: Domain verification fails when clicking "Verify Domain"
+
+**Solutions**:
+- Ensure DNS records are configured correctly (check for typos)
+- Wait longer for DNS propagation (up to 48 hours)
+- Use DNS checking tools to verify propagation
+- Check that you're using the correct record type (A vs CNAME)
+- Verify TTL is set appropriately (3600 or lower)
+
+### Redirect not working after verification
+
+**Issue**: Domain is verified but redirect doesn't work
+
+**Solutions**:
+- Wait 5-10 minutes for SSL certificate provisioning
+- Clear browser cache or test in incognito mode
+- Check that redirect is enabled in dashboard
+- Verify DNS is pointing to Quickleap (not cached old values)
+- Test with curl to see actual HTTP response
+
+### SSL certificate not provisioning
+
+**Issue**: HTTPS doesn't work even after verification
+
+**Solutions**:
+- Wait up to 30 minutes for certificate issuance
+- Ensure domain verification completed successfully
+- Check that DNS is configured correctly
+- Verify no CAA records blocking certificate issuance
+- Contact support if issue persists after 1 hour
+
+### Cloudflare proxy conflicts
+
+**Issue**: Redirect doesn't work when using Cloudflare
+
+**Solutions**:
+- Disable Cloudflare proxy (change from orange cloud to gray cloud)
+- Set DNS to "DNS only" mode in Cloudflare
+- Alternatively, use Cloudflare Page Rules for redirects
+
+## Get help
+
+If you encounter issues not covered here:
+
+- Check the [API reference](/api/overview) for detailed endpoint documentation
+- Review [common issues](/guides/troubleshooting) in our knowledge base
+- Contact support at [admin@lazyweb.rocks](mailto:admin@lazyweb.rocks)

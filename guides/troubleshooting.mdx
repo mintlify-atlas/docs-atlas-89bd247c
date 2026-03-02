@@ -1,0 +1,561 @@
+---
+title: Troubleshooting
+description: Common issues and solutions for Quickleap
+---
+
+Find solutions to common problems you might encounter when using Quickleap.
+
+## DNS and domain setup
+
+<Accordion title="My domain isn't redirecting">
+  **Symptoms**: Visitors see an error page or timeout when accessing your domain.
+  
+  **Common causes**:
+  
+  1. **DNS not configured correctly**
+     - Verify DNS records point to Quickleap's servers
+     - DNS propagation can take 24-48 hours
+     - Use a DNS checker tool to verify propagation
+  
+  2. **Domain not verified**
+     ```javascript
+     // Check domain verification status
+     const status = await verifyStatus('yourdomain.com');
+     console.log(status.data);
+     ```
+     - Complete the verification process before DNS changes
+     - Verification typically requires a TXT record or file upload
+  
+  3. **Incorrect domain format**
+     - Use the root domain without protocol: `example.com` not `https://example.com`
+     - Don't include paths: `example.com` not `example.com/page`
+  
+  **Solution**: Run the verification endpoint and check for specific error messages. Ensure DNS records match the provided configuration exactly.
+</Accordion>
+
+<Accordion title="HTTPS certificate errors">
+  **Symptoms**: Browser shows "Not Secure" warning or SSL certificate error.
+  
+  **Common causes**:
+  
+  1. **Certificate still provisioning**
+     - SSL certificates take 10-60 minutes to provision after DNS verification
+     - Check domain verification status to confirm completion
+  
+  2. **DNS records incomplete**
+     - Both A and AAAA records must be configured
+     - CAA records might block certificate issuance
+  
+  3. **Mixed domain configuration**
+     - Both www and non-www versions need separate verification if used
+  
+  **Solution**: Wait 1 hour after successful verification, then check again. If issues persist, verify all DNS records are correctly configured.
+</Accordion>
+
+<Accordion title="Domain verification fails">
+  **Symptoms**: Verification endpoint returns an error or verification status shows as failed.
+  
+  **Common causes**:
+  
+  1. **Verification record not found**
+     - TXT record not added to DNS
+     - TXT record added to wrong subdomain
+     - DNS cache hasn't updated
+  
+  2. **Domain already claimed**
+     - Domain verified by another account
+     - Previous verification not removed
+  
+  3. **DNS provider issues**
+     - Some providers take longer to propagate changes
+     - Cloudflare proxying can interfere with verification
+  
+  **Solution**: 
+  ```bash
+  # Check TXT record propagation
+  dig TXT _quickleap-verify.yourdomain.com
+  
+  # Or use nslookup
+  nslookup -type=TXT _quickleap-verify.yourdomain.com
+  ```
+  Wait 5-10 minutes after adding the record, then retry verification.
+</Accordion>
+
+<Accordion title="Subdomains not working">
+  **Symptoms**: Root domain redirects correctly but subdomains don't.
+  
+  **Solution**: Each subdomain requires separate configuration:
+  
+  1. Create a redirect for the subdomain: `sub.example.com`
+  2. Verify the subdomain separately
+  3. Configure DNS records for the subdomain
+  
+  Wildcard subdomain redirects are not currently supported.
+</Accordion>
+
+## Redirect configuration issues
+
+<Accordion title="Redirects not preserving URL paths">
+  **Symptoms**: `oldsite.com/page` redirects to `newsite.com` instead of `newsite.com/page`.
+  
+  **Solution**: Enable path forwarding when creating or updating the redirect:
+  
+  ```javascript
+  {
+    "fromDomain": "oldsite.com",
+    "toDomain": "https://newsite.com",
+    "pathForwarding": true,  // Enable this
+    "queryForwarding": true,
+    "redirectType": "permanent",
+    "samplingRate": 1.0
+  }
+  ```
+  
+  <Warning>
+  Changing path forwarding on an existing redirect affects all visitors immediately. Test thoroughly before enabling.
+  </Warning>
+</Accordion>
+
+<Accordion title="Query parameters not being forwarded">
+  **Symptoms**: `oldsite.com?utm_source=email` redirects to `newsite.com` without the query parameters.
+  
+  **Solution**: Enable query forwarding:
+  
+  ```javascript
+  await updateRedirect({
+    id: redirectId,
+    queryForwarding: true,  // Enable this
+    // ... other fields
+  });
+  ```
+  
+  <Tip>
+  Query forwarding is essential for preserving UTM parameters and tracking campaign performance.
+  </Tip>
+</Accordion>
+
+<Accordion title="Wrong redirect type being applied">
+  **Symptoms**: Expecting a 301 but seeing 302 in network inspector, or vice versa.
+  
+  **Solution**: Verify the redirect type in your configuration:
+  
+  - `"redirectType": "permanent"` → 301 redirect
+  - `"redirectType": "temporary"` → 302 redirect
+  
+  Check the redirect configuration:
+  ```javascript
+  const redirects = await getUserRedirects();
+  console.log(redirects.data);
+  ```
+  
+  <Note>
+  Browsers and CDNs may cache 301 redirects aggressively. Clear your browser cache when testing redirect type changes.
+  </Note>
+</Accordion>
+
+<Accordion title="Destination URL formatting issues">
+  **Symptoms**: Redirects fail or produce malformed URLs.
+  
+  **Common mistakes**:
+  
+  1. **Missing protocol**: Use `https://example.com` not `example.com`
+  2. **Trailing slashes**: Be consistent - `https://example.com/page` vs `https://example.com/page/`
+  3. **Double slashes**: With path forwarding enabled, `https://example.com/` + `/page` creates `https://example.com//page`
+  
+  **Solution**: Always include the protocol and avoid trailing slashes when using path forwarding.
+</Accordion>
+
+## Rule-based redirect problems
+
+<Accordion title="Rules not triggering as expected">
+  **Symptoms**: Traffic isn't being redirected according to rule conditions.
+  
+  **Debugging steps**:
+  
+  1. **Check rule status**
+     ```javascript
+     const rules = await getRulesForRedirect(redirectId);
+     rules.data.forEach(rule => {
+       console.log(`${rule.name}: ${rule.status}`);
+     });
+     ```
+     - Ensure status is `"active"` not `"inactive"` or `"draft"`
+  
+  2. **Verify rule priority**
+     - Lower priority numbers execute first
+     - A higher-priority rule might be matching before your intended rule
+     - Check for catch-all rules (no conditions) with high priority
+  
+  3. **Test rule evaluation**
+     ```javascript
+     const test = await testRuleEvaluation(redirectId, {
+       userAttributes: {
+         country: 'US',
+         device_type: 'mobile',
+         browser_name: 'Chrome'
+       }
+     });
+     console.log('Matched rule:', test.data.result);
+     ```
+  
+  4. **Review condition logic**
+     - AND logic requires all conditions to match
+     - OR logic requires at least one condition to match
+     - Verify operator choice matches your intent
+</Accordion>
+
+<Accordion title="Geographic rules not working">
+  **Symptoms**: Country, region, or city-based rules don't trigger correctly.
+  
+  **Common causes**:
+  
+  1. **Country code format**
+     - Use ISO 3166-1 alpha-2 codes: `"US"` not `"USA"` or `"United States"`
+     - Common codes: US, GB, DE, FR, JP, AU, CA
+  
+  2. **VPN/proxy interference**
+     - Users on VPNs appear from different locations
+     - Test without VPN to verify rule logic
+  
+  3. **Case sensitivity**
+     - Use uppercase for country codes: `"US"` not `"us"`
+  
+  **Solution**: Get available values from analytics:
+  ```javascript
+  const countries = await getAttributeValues(redirectId, 'country');
+  console.log('Available countries:', countries.data.values);
+  ```
+</Accordion>
+
+<Accordion title="A/B test percentages not splitting evenly">
+  **Symptoms**: A/B test variants receiving unequal traffic despite equal percentages.
+  
+  **Expected behavior**: Over large sample sizes (1000+ visitors), percentages should approximate configured values.
+  
+  **Common causes**:
+  
+  1. **Small sample size**
+     - Need at least 100-200 visits per variant for statistical reliability
+     - Daily fluctuations are normal with low traffic
+  
+  2. **Conditions affecting distribution**
+     - Rules with conditions only apply to matching traffic
+     - Other higher-priority rules might be intercepting traffic
+  
+  3. **Percentage validation**
+     - Percentages must sum to 100
+     - Each variant must have percentage > 0
+  
+  **Solution**: Review rule analytics to see actual distribution:
+  ```javascript
+  const analytics = await getRuleAnalytics(redirectId);
+  console.log('Rule hit counts:', analytics.data.analytics);
+  ```
+</Accordion>
+
+<Accordion title="Time-based rules not activating">
+  **Symptoms**: Rules with start/end dates aren't triggering during the specified period.
+  
+  **Common causes**:
+  
+  1. **Timezone issues**
+     - Dates are interpreted in UTC
+     - Convert local time to UTC when setting dates
+  
+  2. **Date format**
+     - Use ISO 8601 format: `"2026-03-01T00:00:00Z"`
+     - Include the `Z` suffix for UTC
+  
+  3. **Rule status**
+     - Rule must be `"active"` even during the date range
+     - Draft rules never trigger regardless of dates
+  
+  **Solution**: Verify dates are in UTC and rule status is active:
+  ```javascript
+  const rule = await getRuleById(ruleId);
+  console.log('Start:', rule.data.startDate);
+  console.log('End:', rule.data.endDate);
+  console.log('Status:', rule.data.status);
+  ```
+</Accordion>
+
+<Accordion title="Query parameter rules not matching">
+  **Symptoms**: Rules based on query parameters aren't triggering.
+  
+  **Common causes**:
+  
+  1. **Missing param field**
+     ```javascript
+     // Wrong - missing param
+     {
+       "attribute": "query_param",
+       "operator": "equals",
+       "value": "email"
+     }
+     
+     // Correct - includes param
+     {
+       "attribute": "query_param",
+       "operator": "equals",
+       "value": "email",
+       "param": "utm_source"  // Specifies which parameter
+     }
+     ```
+  
+  2. **Case sensitivity**
+     - Parameter names are case-sensitive
+     - `utm_source` ≠ `UTM_SOURCE`
+  
+  3. **Value matching**
+     - Values must match exactly (unless using contains/starts_with)
+     - URL encoding might affect matching
+  
+  **Solution**: Use the test endpoint to verify parameter detection:
+  ```javascript
+  await testRuleEvaluation(redirectId, {
+    userAttributes: {
+      url_path: '/page',
+      query_params: {
+        'utm_source': 'email',
+        'utm_campaign': 'spring-sale'
+      }
+    }
+  });
+  ```
+</Accordion>
+
+## Analytics data issues
+
+<Accordion title="No analytics data appearing">
+  **Symptoms**: Analytics dashboard shows zero visits despite confirmed traffic.
+  
+  **Common causes**:
+  
+  1. **Sampling rate set to 0**
+     ```javascript
+     const redirects = await getUserRedirects();
+     // Check samplingRate for each redirect
+     redirects.data.forEach(r => {
+       console.log(`${r.fromDomain}: ${r.samplingRate}`);
+     });
+     ```
+     - Sampling rate of 0 disables analytics
+     - Set to 1.0 for 100% tracking
+  
+  2. **Recent setup**
+     - Analytics appear within 5-10 minutes of first traffic
+     - Check date range in analytics queries
+  
+  3. **Bot traffic filtered**
+     - Known bots are filtered from analytics by default
+     - Check bot analytics separately
+  
+  **Solution**: Update sampling rate and wait 10 minutes:
+  ```javascript
+  await updateRedirect({
+    id: redirectId,
+    samplingRate: 1.0
+  });
+  ```
+</Accordion>
+
+<Accordion title="Analytics showing incorrect geographic data">
+  **Symptoms**: Country/city data doesn't match expected traffic sources.
+  
+  **Common causes**:
+  
+  1. **GeoIP accuracy limitations**
+     - Country-level accuracy: ~99%
+     - City-level accuracy: ~60-80%
+     - Mobile/cellular IPs less accurate than fixed-line
+  
+  2. **VPN and proxy traffic**
+     - Users on VPNs appear from VPN server location
+     - Corporate proxies can skew location data
+  
+  3. **CDN or caching layer**
+     - Traffic through CDNs might show CDN location
+  
+  **Expected behavior**: Minor discrepancies are normal. Use country-level data for accuracy.
+</Accordion>
+
+<Accordion title="Device or browser analytics seem wrong">
+  **Symptoms**: Device types or browsers don't match expectations.
+  
+  **Common causes**:
+  
+  1. **User agent parsing limitations**
+     - Some obscure browsers may be misidentified
+     - Modified user agents affect detection
+  
+  2. **Bot traffic**
+     - Bots may masquerade as browsers
+     - Check bot analytics separately
+  
+  **Solution**: Review user agent analytics for unexpected patterns:
+  ```javascript
+  const userAgents = await getUserAgentAnalytics(redirectId, {
+    start: '2026-03-01',
+    end: '2026-03-02'
+  });
+  console.log(userAgents.data);
+  ```
+</Accordion>
+
+<Accordion title="Date range filters not working">
+  **Symptoms**: Analytics show same data regardless of date range.
+  
+  **Solution**: Ensure correct date format:
+  
+  ```javascript
+  // Correct format: YYYY-MM-DD
+  const stats = await getBasicStats(redirectId, {
+    start: '2026-03-01',
+    end: '2026-03-07'
+  });
+  
+  // Also accepts ISO 8601 with time
+  const stats = await getBasicStats(redirectId, {
+    start: '2026-03-01T00:00:00Z',
+    end: '2026-03-07T23:59:59Z'
+  });
+  ```
+  
+  <Note>
+  Dates are inclusive. The range `2026-03-01` to `2026-03-07` includes data from both dates.
+  </Note>
+</Accordion>
+
+## Performance issues
+
+<Accordion title="Slow redirect response times">
+  **Symptoms**: Redirects take several seconds to complete.
+  
+  **Common causes**:
+  
+  1. **Complex rule evaluation**
+     - Many rules with complex conditions increase evaluation time
+     - Regex operators slower than simple equality checks
+  
+  2. **DNS issues**
+     - Slow DNS resolution at destination
+     - Check destination domain's DNS performance
+  
+  3. **Network latency**
+     - Geographic distance between user and redirect servers
+     - Destination server response time
+  
+  **Solution**: Simplify rules and verify destination URL performance:
+  ```bash
+  # Test destination URL response time
+  curl -w "@-" -o /dev/null -s https://destination.com <<'EOF'
+  time_namelookup: %{time_namelookup}
+  time_connect: %{time_connect}
+  time_total: %{time_total}
+  EOF
+  ```
+</Accordion>
+
+<Accordion title="High analytics query latency">
+  **Symptoms**: Analytics API requests take a long time to complete.
+  
+  **Common causes**:
+  
+  1. **Large date ranges**
+     - Queries over 90+ days process more data
+     - Use smaller date ranges or pagination
+  
+  2. **High-traffic redirects**
+     - Millions of hits require more processing
+     - Use appropriate sampling rates
+  
+  **Solution**: Query smaller date ranges and use pagination:
+  ```javascript
+  // Query last 7 days instead of all time
+  const stats = await getBasicStats(redirectId, {
+    start: '2026-02-23',
+    end: '2026-03-02'
+  });
+  
+  // Use pagination for raw hits
+  const hits = await getRawHitData(redirectId, {
+    page: 1,
+    limit: 100
+  });
+  ```
+</Accordion>
+
+## API and integration issues
+
+<Accordion title="Authentication errors">
+  **Symptoms**: API requests return 401 Unauthorized errors.
+  
+  **Solution**: 
+  1. Verify authentication token is valid and not expired
+  2. Check that token is included in request headers
+  3. Ensure correct API endpoint URL
+  
+  Refer to the [authentication documentation](/api/authentication) for setup details.
+</Accordion>
+
+<Accordion title="Rate limiting errors">
+  **Symptoms**: API returns 429 Too Many Requests.
+  
+  **Solution**: 
+  - Implement exponential backoff retry logic
+  - Reduce request frequency
+  - Batch requests when possible
+  - Contact support for higher rate limits on paid plans
+</Accordion>
+
+<Accordion title="Validation errors when creating rules">
+  **Symptoms**: Rule creation fails with validation errors.
+  
+  **Common validation issues**:
+  
+  1. **Percentage sum validation**
+     - A/B test variant percentages must sum to 100
+  
+  2. **Invalid attribute/operator combinations**
+     - Not all operators work with all attributes
+     - Use getAttributesAndOperators to see valid combinations
+  
+  3. **Missing required fields**
+     - Query param conditions require `param` field
+     - Range operators require array with 2 values
+  
+  **Solution**: Get valid attributes and operators:
+  ```javascript
+  const config = await getAttributesAndOperators(redirectId);
+  console.log('Available attributes:', config.data.attributes);
+  console.log('Available operators:', config.data.operators);
+  ```
+</Accordion>
+
+## Getting additional help
+
+If you've tried these solutions and still encounter issues:
+
+<CardGroup cols={2}>
+  <Card title="Check API status" icon="signal" href="https://status.quickleap.io">
+    Verify there are no ongoing service disruptions
+  </Card>
+  <Card title="Contact support" icon="headset" href="mailto:admin@lazyweb.rocks">
+    Reach out with details about your issue and any error messages
+  </Card>
+  <Card title="Review documentation" icon="book">
+    Check the API reference for parameter requirements and examples
+  </Card>
+  <Card title="Community forum" icon="comments">
+    Search for similar issues or ask the community
+  </Card>
+</CardGroup>
+
+<Tip>
+When contacting support, include:
+- Redirect ID or domain name
+- Rule IDs (if rule-related)
+- Error messages or HTTP status codes
+- Timestamps of when the issue occurred
+- Steps to reproduce the problem
+</Tip>

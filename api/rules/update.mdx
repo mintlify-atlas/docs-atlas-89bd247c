@@ -1,0 +1,291 @@
+---
+title: Update a rule
+description: Modify an existing rule configuration
+---
+
+## Update rule
+
+```
+PUT /rules/:ruleId
+```
+
+Updates an existing rule. All fields from the create request are supported, plus `priority` and `status`.
+
+### Path parameters
+
+<ParamField path="ruleId" type="string" required>
+  The ID of the rule to update
+</ParamField>
+
+### Request body
+
+All fields are optional. Only provided fields will be updated.
+
+<ParamField body="name" type="string">
+  Rule name
+</ParamField>
+
+<ParamField body="description" type="string">
+  Rule description
+</ParamField>
+
+<ParamField body="type" type="RuleType">
+  Rule type: `force`, `percentage`, or `ab_experiment`
+</ParamField>
+
+<ParamField body="conditions" type="RuleCondition[]">
+  Array of conditions. See [Create a rule](/api/rules/create#request-body) for structure.
+</ParamField>
+
+<ParamField body="conditionLogic" type="ConditionLogic">
+  Condition combination logic: `AND` or `OR`
+</ParamField>
+
+<ParamField body="action" type="RuleAction">
+  Rule action. See [Create a rule](/api/rules/create#request-body) for structure.
+</ParamField>
+
+<ParamField body="priority" type="number">
+  Evaluation priority (lower = higher priority)
+</ParamField>
+
+<ParamField body="status" type="RuleStatus">
+  Rule status: `active`, `inactive`, or `draft`
+</ParamField>
+
+<ParamField body="startDate" type="string">
+  ISO 8601 start date
+</ParamField>
+
+<ParamField body="endDate" type="string">
+  ISO 8601 end date
+</ParamField>
+
+<ParamField body="metadata" type="Record<string, string | number | boolean>">
+  Custom metadata
+</ParamField>
+
+### Response
+
+<ResponseField name="rule" type="Rule">
+  The updated rule object. See [List rules](/api/rules/list#response) for structure.
+</ResponseField>
+
+### Examples
+
+<CodeGroup>
+
+```typescript Update rule name and description
+import { updateRule } from '@quickleap/sdk';
+
+const response = await updateRule('rule_456', {
+  name: 'Updated mobile redirect',
+  description: 'Send mobile users to new app URL'
+});
+
+console.log(response.data.rule);
+```
+
+```typescript Change rule action
+import { updateRule } from '@quickleap/sdk';
+
+const response = await updateRule('rule_456', {
+  action: {
+    type: 'redirect',
+    url: 'https://newdestination.example.com'
+  }
+});
+
+console.log(response.data.rule);
+```
+
+```typescript Update A/B test percentages
+import { updateRule } from '@quickleap/sdk';
+
+const response = await updateRule('rule_456', {
+  action: {
+    type: 'ab_test',
+    variants: [
+      {
+        name: 'Control',
+        percentage: 30,
+        url: 'https://example.com/landing-a'
+      },
+      {
+        name: 'Variant B',
+        percentage: 70,
+        url: 'https://example.com/landing-b'
+      }
+    ]
+  }
+});
+
+console.log(response.data.rule);
+```
+
+```typescript Add conditions
+import { updateRule } from '@quickleap/sdk';
+
+const response = await updateRule('rule_456', {
+  conditions: [
+    {
+      attribute: 'device_type',
+      operator: 'equals',
+      value: 'mobile'
+    },
+    {
+      attribute: 'country',
+      operator: 'in',
+      value: ['US', 'CA', 'GB']
+    }
+  ],
+  conditionLogic: 'AND'
+});
+
+console.log(response.data.rule);
+```
+
+</CodeGroup>
+
+## Toggle status
+
+```
+PUT /rules/:ruleId/status
+```
+
+Quickly toggle a rule's status without updating other fields.
+
+### Path parameters
+
+<ParamField path="ruleId" type="string" required>
+  The ID of the rule
+</ParamField>
+
+### Request body
+
+<ParamField body="status" type="RuleStatus" required>
+  New status: `active`, `inactive`, or `draft`
+</ParamField>
+
+### Response
+
+<ResponseField name="rule" type="Rule">
+  The updated rule object
+</ResponseField>
+
+### Examples
+
+<CodeGroup>
+
+```typescript Activate a rule
+import { toggleRuleStatus } from '@quickleap/sdk';
+
+const response = await toggleRuleStatus('rule_456', {
+  status: 'active'
+});
+
+console.log(`Rule is now ${response.data.rule.status}`);
+```
+
+```typescript Deactivate a rule
+import { toggleRuleStatus } from '@quickleap/sdk';
+
+const response = await toggleRuleStatus('rule_456', {
+  status: 'inactive'
+});
+
+console.log(`Rule is now ${response.data.rule.status}`);
+```
+
+</CodeGroup>
+
+## Reorder rules
+
+```
+PUT /rules/redirect/:redirectId/reorder
+```
+
+Change rule evaluation order by updating priorities.
+
+### Path parameters
+
+<ParamField path="redirectId" type="string" required>
+  The ID of the redirect
+</ParamField>
+
+### Request body
+
+<ParamField body="ruleIds" type="number[]" required>
+  Array of rule IDs in desired order (first = highest priority)
+</ParamField>
+
+### Response
+
+<ResponseField name="message" type="string">
+  Success message
+</ResponseField>
+
+<ResponseField name="rules" type="Rule[]">
+  Updated rules in new priority order
+</ResponseField>
+
+### Example
+
+<CodeGroup>
+
+```typescript Reorder rules
+import { reorderRules } from '@quickleap/sdk';
+
+// Move rule 789 to highest priority
+const response = await reorderRules('redirect_123', {
+  ruleIds: [789, 456, 123]
+});
+
+console.log('New order:');
+response.data.rules.forEach(rule => {
+  console.log(`${rule.priority}: ${rule.name}`);
+});
+```
+
+</CodeGroup>
+
+## Duplicate rule
+
+```
+POST /rules/:ruleId/duplicate
+```
+
+Create a copy of an existing rule.
+
+### Path parameters
+
+<ParamField path="ruleId" type="string" required>
+  The ID of the rule to duplicate
+</ParamField>
+
+### Response
+
+<ResponseField name="rule" type="Rule">
+  The newly created rule (copy of original with status `draft`)
+</ResponseField>
+
+### Example
+
+<CodeGroup>
+
+```typescript Duplicate a rule
+import { duplicateRule } from '@quickleap/sdk';
+
+const response = await duplicateRule('rule_456');
+const newRule = response.data.rule;
+
+console.log(`Created duplicate: ${newRule.id}`);
+console.log(`Original name: ${newRule.name}`);
+console.log(`Status: ${newRule.status}`);
+```
+
+</CodeGroup>
+
+<Note>
+  Duplicated rules are created with status `draft`. Activate them using the toggle status endpoint.
+</Note>

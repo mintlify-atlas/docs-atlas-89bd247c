@@ -1,0 +1,323 @@
+---
+title: Custom domain support
+description: Connect your own domains to Quickleap with automatic DNS configuration verification and SSL certificate provisioning
+---
+
+Quickleap supports custom domains, allowing you to redirect from any domain you own. Connect your domain with simple DNS configuration and get automatic HTTPS support.
+
+## Overview
+
+When you create a redirect, the "From Domain" can be any domain you control. Quickleap handles the redirect infrastructure while you maintain control of your domain.
+
+<Info>
+Every custom domain gets automatic SSL certificate provisioning for secure HTTPS redirects.
+</Info>
+
+## How it works
+
+<CardGroup cols={3}>
+  <Card title="Create redirect" icon="plus">
+    Add a redirect with your custom domain as the From Domain.
+  </Card>
+  <Card title="Configure DNS" icon="network-wired">
+    Point your domain's DNS to Quickleap's redirect infrastructure.
+  </Card>
+  <Card title="Automatic SSL" icon="lock">
+    Quickleap automatically provisions and manages SSL certificates.
+  </Card>
+</CardGroup>
+
+## DNS configuration
+
+To connect your custom domain, you need to configure DNS records with your domain registrar or DNS provider.
+
+### Required DNS record
+
+After creating a redirect, Quickleap provides the DNS configuration you need:
+
+<Tabs>
+  <Tab title="A record">
+    For domains pointing to an IP address:
+    
+    - **Type**: A
+    - **Name**: @ (or your subdomain)
+    - **Value**: The IP address provided by Quickleap
+    - **TTL**: 3600 (or your preference)
+    
+    <Note>
+    A records point directly to an IP address and are the most common configuration.
+    </Note>
+  </Tab>
+  <Tab title="CNAME record">
+    For subdomains pointing to a hostname:
+    
+    - **Type**: CNAME
+    - **Name**: Your subdomain (e.g., "promo")
+    - **Value**: The hostname provided by Quickleap
+    - **TTL**: 3600 (or your preference)
+    
+    <Warning>
+    CNAME records typically cannot be used for root domains (e.g., example.com). Use A records for root domains.
+    </Warning>
+  </Tab>
+</Tabs>
+
+### Finding your DNS configuration
+
+Quickleap shows you the exact DNS configuration needed:
+
+1. Create or edit a redirect with your custom domain
+2. View the redirect details
+3. Expand the DNS configuration section
+4. Copy the provided DNS record values
+
+<Info>
+The DNS configuration is displayed directly in your redirect details with the exact record type and value you need.
+</Info>
+
+## Setting up DNS
+
+The DNS setup process varies by provider, but the general steps are:
+
+### Step 1: Access your DNS settings
+
+Log in to your domain registrar or DNS provider:
+- GoDaddy
+- Cloudflare
+- Namecheap
+- Google Domains
+- Route 53 (AWS)
+- Or any other DNS provider
+
+### Step 2: Add the DNS record
+
+1. Navigate to DNS management for your domain
+2. Click "Add Record" or similar option
+3. Select the record type (A or CNAME)
+4. Enter the name/host:
+   - For root domain (example.com): Use `@` or leave blank
+   - For subdomain (promo.example.com): Enter the subdomain (e.g., `promo`)
+5. Enter the value/target provided by Quickleap
+6. Set TTL (3600 is recommended)
+7. Save the record
+
+### Step 3: Wait for propagation
+
+DNS changes can take time to propagate:
+- **Minimum**: 5-10 minutes
+- **Typical**: 1-2 hours
+- **Maximum**: 24-48 hours (rare)
+
+<Note>
+Quickleap automatically checks your DNS configuration every 5 seconds when you're viewing the redirect details.
+</Note>
+
+### Step 4: Verify in Quickleap
+
+Quickleap automatically verifies your DNS configuration:
+
+1. Navigate to your redirect details
+2. The status will update automatically when DNS is detected
+3. You'll see a "DNS Verified" message when successful
+4. SSL certificate provisioning begins automatically
+
+<Info>
+You can manually trigger a verification check by clicking the "Verify" button in your redirect details.
+</Info>
+
+## DNS verification status
+
+Quickleap displays clear status messages for DNS configuration:
+
+<Tabs>
+  <Tab title="Not configured">
+    **Status**: DNS records not found
+    
+    **What it means**: Your DNS records are not yet pointing to Quickleap, or DNS changes haven't propagated.
+    
+    **Action**: 
+    - Verify you've added the correct DNS record
+    - Check the record type and value match exactly
+    - Wait for DNS propagation (can take up to 48 hours)
+  </Tab>
+  <Tab title="Configured - Pending SSL">
+    **Status**: DNS verified, SSL certificate pending
+    
+    **What it means**: Your DNS is correctly configured and Quickleap is provisioning an SSL certificate.
+    
+    **Action**: 
+    - No action needed
+    - Certificate provisioning typically takes 5-10 minutes
+    - Your redirect will be fully operational once the certificate is active
+  </Tab>
+  <Tab title="Fully configured">
+    **Status**: DNS verified, SSL certificate active
+    
+    **What it means**: Everything is configured correctly and your redirect is fully operational with HTTPS.
+    
+    **Action**: 
+    - Your custom domain redirect is working!
+    - Traffic is being redirected securely via HTTPS
+    - Monitor analytics to see redirect performance
+  </Tab>
+</Tabs>
+
+## SSL certificates
+
+Quickleap automatically provisions SSL certificates for all custom domains.
+
+### Automatic provisioning
+
+- **Triggered by**: Successful DNS verification
+- **Time to provision**: 5-10 minutes typically
+- **Certificate type**: Industry-standard SSL/TLS
+- **Validity**: Automatically renewed before expiration
+- **Coverage**: Your specific domain and www variant (if applicable)
+
+<Info>
+You don't need to purchase or configure SSL certificates separately. Quickleap handles everything automatically.
+</Info>
+
+### Certificate status
+
+Track SSL certificate provisioning:
+
+- **Pending**: Certificate is being requested and validated
+- **Active**: Certificate is installed and protecting your domain
+- **Renewing**: Certificate is being automatically renewed (happens before expiration)
+
+### HTTPS enforcement
+
+Once your SSL certificate is active:
+
+- All redirects use HTTPS automatically
+- HTTP requests are upgraded to HTTPS
+- Secure, encrypted redirects for all traffic
+
+<Note>
+HTTPS is enabled automatically - you don't need to configure anything. See the [security features](/features/security) documentation for more details.
+</Note>
+
+## Multiple domains
+
+You can create redirects from as many custom domains as you need:
+
+- Each domain is configured independently
+- Each gets its own SSL certificate
+- Manage all domains from a single dashboard
+- No limit on the number of custom domains (plan-dependent)
+
+**Example multi-domain setup:**
+- oldbrand.com → newbrand.com
+- promo.example.com → example.com/campaign
+- mobile.example.com → example.com (with mobile rules)
+
+## Subdomains
+
+Subdomains work the same as root domains:
+
+1. Create a redirect with the subdomain as From Domain
+2. Configure DNS (typically CNAME record for subdomains)
+3. Wait for verification
+4. SSL is provisioned automatically
+
+**Common subdomain use cases:**
+- `www.example.com` → Redirect to non-www or different domain
+- `promo.example.com` → Campaign-specific landing pages
+- `mobile.example.com` → Mobile-optimized destinations
+- `shop.example.com` → E-commerce platform
+
+## Troubleshooting
+
+<Accordion title="DNS not verifying">
+  **Symptoms:** DNS status remains "Not configured" after adding records
+  
+  **Solutions:**
+  1. Verify the DNS record values match exactly (copy-paste recommended)
+  2. Check you're editing DNS for the correct domain
+  3. Ensure you selected the right record type (A vs CNAME)
+  4. Wait longer - DNS propagation can take up to 48 hours
+  5. Use a DNS checker tool (like dnschecker.org) to verify propagation
+  6. Check for conflicting DNS records and remove them
+  7. Disable any "parking" or "forwarding" at your registrar
+</Accordion>
+
+<Accordion title="SSL certificate pending">
+  **Symptoms:** DNS verified but SSL shows as "pending" for extended time
+  
+  **Solutions:**
+  1. Wait 10-15 minutes - certificate provisioning takes time
+  2. Ensure DNS is stable and not frequently changing
+  3. Verify no CAA DNS records are blocking certificate issuance
+  4. Check that the domain is publicly accessible
+  5. Contact Quickleap support if pending for over 1 hour
+</Accordion>
+
+<Accordion title="Redirect not working">
+  **Symptoms:** DNS and SSL verified but redirects not functioning
+  
+  **Solutions:**
+  1. Clear your browser cache and cookies
+  2. Try accessing in a private/incognito window
+  3. Verify the redirect is not paused or disabled
+  4. Check that To Domain is accessible and valid
+  5. Review redirect configuration (type, forwarding settings)
+  6. Check rule configuration if using conditional redirects
+</Accordion>
+
+<Accordion title="Cloudflare configuration">
+  **Special considerations for Cloudflare users:**
+  
+  If your domain uses Cloudflare:
+  1. Add the DNS record as normal
+  2. Set the record to "DNS only" (grey cloud icon)
+  3. Do not enable Cloudflare proxy (orange cloud) for redirect domains
+  4. Quickleap handles the redirect; Cloudflare proxy will interfere
+  
+  <Warning>
+  Using Cloudflare's proxy (orange cloud) on your From Domain will prevent Quickleap redirects from working.
+  </Warning>
+</Accordion>
+
+## Domain ownership
+
+<Info>
+You must own or control the domain you're redirecting from. Quickleap cannot redirect domains you don't own.
+</Info>
+
+To verify domain ownership:
+- You must have access to the domain's DNS settings
+- You must be able to add or modify DNS records
+- The domain must be registered and active
+
+## Best practices
+
+<CardGroup cols={2}>
+  <Card title="Use DNS only mode" icon="cloud">
+    If using Cloudflare or similar services, disable proxy mode (use DNS only) for redirect domains.
+  </Card>
+  <Card title="Set appropriate TTL" icon="clock">
+    Use a TTL of 3600 (1 hour) for redirect DNS records - balances propagation speed with flexibility.
+  </Card>
+  <Card title="Remove conflicting records" icon="trash">
+    Delete any existing A or CNAME records for the domain before adding Quickleap's DNS configuration.
+  </Card>
+  <Card title="Test after setup" icon="vial">
+    Always test your redirect in multiple browsers after DNS verification to ensure it works as expected.
+  </Card>
+  <Card title="Monitor certificate expiration" icon="certificate">
+    While automatic, check SSL status periodically to ensure certificates are renewing properly.
+  </Card>
+  <Card title="Document configurations" icon="book">
+    Keep a record of which domains point to Quickleap in case you need to troubleshoot or migrate.
+  </Card>
+</CardGroup>
+
+## Support
+
+Need help with custom domain setup?
+
+- Check the DNS configuration shown in your redirect details
+- Use the in-app status messages for troubleshooting guidance
+- Contact Quickleap support for assistance with complex configurations
+- Reference your DNS provider's documentation for provider-specific steps

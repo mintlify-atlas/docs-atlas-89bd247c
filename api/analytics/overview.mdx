@@ -1,0 +1,164 @@
+---
+title: Analytics API overview
+description: Access comprehensive analytics data for your redirects
+---
+
+The Analytics API provides detailed insights into your redirect traffic, including visitor statistics, geographic distribution, device information, referrer sources, and more.
+
+## Available endpoints
+
+The Analytics API offers the following endpoint categories:
+
+### Core statistics
+- **Basic stats** - Get overview metrics including total hits, unique visitors, and bot detection
+- **Time series** - Analyze hits over time with customizable intervals
+- **Dashboard summary** - Get a comprehensive overview for dashboard displays
+
+### Traffic sources
+- **Referrer data** - Understand where your traffic is coming from
+- **Geographic data** - See visitor distribution by country or city
+- **Campaign analytics** - Track UTM parameters for marketing campaigns
+
+### User & device analytics
+- **Device information** - Breakdown by device type, OS, and browser
+- **Device categories** - Mobile, desktop, and tablet distribution
+- **Browser families** - Analytics grouped by browser type
+- **User agents** - Detailed user agent analysis
+- **Language data** - Visitor language preferences
+
+### Traffic patterns
+- **Hourly traffic** - Identify peak hours and traffic patterns
+- **Peak traffic analytics** - Find highest traffic periods
+- **Return visitor analytics** - Track new vs returning visitors
+
+### Technical analytics
+- **Path analytics** - See which paths are most accessed
+- **Query parameter analytics** - Analyze query string usage
+- **Status code analytics** - Monitor redirect status codes
+- **Destination URL analytics** - Track where users are redirected to
+- **Error analytics** - Identify and troubleshoot errors
+
+### Advanced analytics
+- **Bot analytics** - Distinguish between human and bot traffic
+- **Comparison analytics** - Compare metrics across time periods
+- **Raw hit data** - Access individual hits with filtering and pagination
+
+## Common parameters
+
+Most analytics endpoints accept the following optional query parameters:
+
+<ParamField query="start" type="string">
+  Start date for the analytics period in ISO 8601 format (e.g., `2024-01-01T00:00:00Z`)
+</ParamField>
+
+<ParamField query="end" type="string">
+  End date for the analytics period in ISO 8601 format (e.g., `2024-01-31T23:59:59Z`)
+</ParamField>
+
+<ParamField query="interval" type="string">
+  Time interval for aggregating data. Available on time-based endpoints.
+  
+  Common values: `hour`, `day`, `week`, `month`
+</ParamField>
+
+<ParamField query="groupBy" type="string">
+  Dimension to group results by. Available on geographic and other endpoints.
+  
+  Examples: `country`, `city`, `region`
+</ParamField>
+
+<ParamField query="limit" type="number">
+  Maximum number of results to return. Available on list-based endpoints.
+  
+  Default varies by endpoint, typically 10-100
+</ParamField>
+
+## Response format
+
+All analytics endpoints return JSON responses with the following general structure:
+
+```json
+{
+  "data": {
+    // Endpoint-specific data structure
+  },
+  "meta": {
+    "redirectId": "redirect_123",
+    "period": {
+      "start": "2024-01-01T00:00:00Z",
+      "end": "2024-01-31T23:59:59Z"
+    }
+  }
+}
+```
+
+## Authentication
+
+All Analytics API requests require authentication. Include your API key in the request headers:
+
+```bash
+Authorization: Bearer YOUR_API_KEY
+```
+
+## Rate limits
+
+The Analytics API is subject to rate limiting to ensure service quality:
+
+- **Standard tier**: 100 requests per minute
+- **Pro tier**: 500 requests per minute
+- **Enterprise tier**: Custom limits available
+
+<Note>
+  When the rate limit is exceeded, the API returns a `429 Too Many Requests` status code with a `Retry-After` header indicating when you can retry.
+</Note>
+
+## Getting started
+
+To start using the Analytics API:
+
+1. Obtain your redirect ID from the dashboard or redirects API
+2. Choose the analytics endpoint that matches your needs
+3. Make a GET request with optional time range parameters
+4. Process the returned data in your application
+
+<CodeGroup>
+
+```typescript TypeScript
+import { getBasicStats } from '@quickleap/api';
+
+const stats = await getBasicStats('redirect_123', {
+  start: '2024-01-01T00:00:00Z',
+  end: '2024-01-31T23:59:59Z'
+});
+
+console.log(stats.data);
+```
+
+```javascript JavaScript
+const { getBasicStats } = require('@quickleap/api');
+
+getBasicStats('redirect_123', {
+  start: '2024-01-01T00:00:00Z',
+  end: '2024-01-31T23:59:59Z'
+}).then(response => {
+  console.log(response.data);
+});
+```
+
+```bash cURL
+curl -X GET \
+  'https://api.quickleap.com/analytics/redirect/redirect_123/stats/basic?start=2024-01-01T00:00:00Z&end=2024-01-31T23:59:59Z' \
+  -H 'Authorization: Bearer YOUR_API_KEY'
+```
+
+</CodeGroup>
+
+## Next steps
+
+Explore the specific analytics endpoints:
+
+- [Basic statistics](/api/analytics/basic-stats) - Get started with core metrics
+- [Time series data](/api/analytics/time-series) - Analyze trends over time
+- [Geographic analytics](/api/analytics/geographic) - Understand your global reach
+- [Device analytics](/api/analytics/devices) - Know your users' devices
+- [Referrer analytics](/api/analytics/referrers) - Track traffic sources

@@ -1,0 +1,346 @@
+---
+title: Authentication
+description: Learn how to authenticate your API requests using Bearer tokens and manage API credentials securely
+---
+
+The Quickleap API uses Bearer token authentication to secure all API requests. You must include a valid authentication token in the `Authorization` header of every request.
+
+## Authentication method
+
+Quickleap uses **Bearer token authentication**. All API requests must include an `Authorization` header with your token:
+
+```
+Authorization: Bearer YOUR_TOKEN
+```
+
+The API client automatically includes credentials with every request (`withCredentials: true`) and supports cookie-based authentication for browser environments.
+
+## Obtaining your API token
+
+To get your API token:
+
+1. Log in to your Quickleap dashboard
+2. Navigate to **Settings** → **API Tokens**
+3. Click **Generate New Token**
+4. Copy and securely store your token
+
+<Warning>
+  Your API token grants full access to your account. Never share it publicly or commit it to version control. If your token is compromised, regenerate it immediately from your dashboard.
+</Warning>
+
+## Making authenticated requests
+
+Include your token in the `Authorization` header of every API request:
+
+<CodeGroup>
+
+```javascript JavaScript
+const token = 'your_api_token_here';
+
+const response = await fetch('https://api.quickleap.io/get-redirects/me', {
+  method: 'GET',
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  },
+  credentials: 'include' // Include cookies
+});
+
+const redirects = await response.json();
+console.log(redirects);
+```
+
+```javascript Axios
+import axios from 'axios';
+
+const client = axios.create({
+  baseURL: 'https://api.quickleap.io',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  timeout: 60000,
+  withCredentials: true // Include cookies
+});
+
+// Add token to every request
+client.interceptors.request.use((config) => {
+  const token = getToken(); // Get token from secure storage
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Make authenticated request
+const response = await client.get('/get-redirects/me');
+console.log(response.data);
+```
+
+```python Python
+import requests
+
+token = 'your_api_token_here'
+
+headers = {
+    'Authorization': f'Bearer {token}',
+    'Content-Type': 'application/json'
+}
+
+response = requests.get(
+    'https://api.quickleap.io/get-redirects/me',
+    headers=headers
+)
+
+redirects = response.json()
+print(redirects)
+```
+
+```bash cURL
+curl -X GET https://api.quickleap.io/get-redirects/me \
+  -H "Authorization: Bearer your_api_token_here" \
+  -H "Content-Type: application/json"
+```
+
+</CodeGroup>
+
+## Authentication errors
+
+The API returns specific error codes for authentication failures:
+
+### Missing token
+
+If you don't include an `Authorization` header, you'll receive a `401 Unauthorized` response:
+
+```json
+{
+  "error": {
+    "message": "Authentication required",
+    "code": "MISSING_TOKEN"
+  }
+}
+```
+
+### Invalid token
+
+If your token is invalid or malformed:
+
+```json
+{
+  "error": {
+    "message": "Invalid authentication token",
+    "code": "INVALID_TOKEN"
+  }
+}
+```
+
+### Expired token
+
+If your token has expired:
+
+```json
+{
+  "error": {
+    "message": "Authentication token has expired",
+    "code": "EXPIRED_TOKEN"
+  }
+}
+```
+
+<Info>
+  When you receive an expired token error, obtain a new token from your dashboard or refresh your authentication session.
+</Info>
+
+## Token storage best practices
+
+### Server-side applications
+
+For server-side applications, store your API token securely using environment variables:
+
+<CodeGroup>
+
+```javascript Node.js
+// .env file (never commit this!)
+QUICKLEAP_API_TOKEN=your_token_here
+
+// Your application code
+require('dotenv').config();
+
+const token = process.env.QUICKLEAP_API_TOKEN;
+
+const response = await fetch('https://api.quickleap.io/get-redirects/me', {
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  }
+});
+```
+
+```python Python
+# .env file (never commit this!)
+QUICKLEAP_API_TOKEN=your_token_here
+
+# Your application code
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+token = os.getenv('QUICKLEAP_API_TOKEN')
+
+headers = {
+    'Authorization': f'Bearer {token}',
+    'Content-Type': 'application/json'
+}
+```
+
+</CodeGroup>
+
+### Client-side applications
+
+For browser-based applications, the Quickleap API supports cookie-based authentication. The client automatically includes cookies with requests when `withCredentials: true` is set.
+
+<Note>
+  For browser applications, consider using cookie-based authentication instead of storing tokens in localStorage to prevent XSS attacks.
+</Note>
+
+### CI/CD and automation
+
+For CI/CD pipelines and automation scripts:
+
+1. Store tokens in your CI/CD platform's secret management system
+2. Inject tokens as environment variables at runtime
+3. Never hardcode tokens in scripts or configuration files
+4. Use different tokens for different environments (development, staging, production)
+
+## Request interceptors
+
+The Quickleap API client includes request interceptors that:
+
+1. **Automatically add tokens** - Tokens from cookies are added to every request
+2. **Trim data** - Request data is automatically trimmed of whitespace
+3. **Set headers** - Content-Type and custom headers are automatically configured
+
+Example interceptor implementation:
+
+```javascript
+import axios from 'axios';
+import Cookies from 'js-cookie';
+
+const client = axios.create({
+  baseURL: 'https://api.quickleap.io',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  timeout: 60000,
+  withCredentials: true
+});
+
+// Add token from cookie to every request
+client.interceptors.request.use(async (config) => {
+  const token = Cookies.get('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+export default client;
+```
+
+## Security best practices
+
+<CardGroup cols={2}>
+  <Card title="Use HTTPS only" icon="lock">
+    Always use HTTPS for API requests. The Quickleap API rejects requests over HTTP.
+  </Card>
+  <Card title="Rotate tokens regularly" icon="rotate">
+    Regenerate your API tokens periodically to minimize security risks.
+  </Card>
+  <Card title="Use environment variables" icon="gear">
+    Never hardcode tokens in your application code or commit them to version control.
+  </Card>
+  <Card title="Implement token refresh" icon="arrows-rotate">
+    Handle token expiration gracefully by implementing automatic token refresh logic.
+  </Card>
+</CardGroup>
+
+## Token permissions
+
+API tokens have the same permissions as your user account. They can:
+
+- Create, read, update, and delete redirects
+- Access all analytics data
+- Manage rules and conditions
+- Modify account settings
+
+<Warning>
+  There is no way to create tokens with limited scopes. Keep this in mind when sharing access or integrating with third-party services.
+</Warning>
+
+## Revoking tokens
+
+To revoke an API token:
+
+1. Go to **Settings** → **API Tokens** in your dashboard
+2. Find the token you want to revoke
+3. Click **Revoke** or **Delete**
+
+Revoked tokens become invalid immediately and cannot be restored. Any applications using the revoked token will receive `401 Unauthorized` errors.
+
+## Testing authentication
+
+Test your authentication setup with a simple request:
+
+<CodeGroup>
+
+```bash cURL
+curl -X GET https://api.quickleap.io/get-redirects/me \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -v
+```
+
+```javascript JavaScript
+const testAuth = async (token) => {
+  try {
+    const response = await fetch('https://api.quickleap.io/get-redirects/me', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (response.ok) {
+      console.log('Authentication successful!');
+      return true;
+    } else {
+      console.error('Authentication failed:', response.status);
+      return false;
+    }
+  } catch (error) {
+    console.error('Request failed:', error);
+    return false;
+  }
+};
+
+testAuth('your_token_here');
+```
+
+</CodeGroup>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="API overview" icon="book" href="/api/overview">
+    Learn about API resources and concepts
+  </Card>
+  <Card title="Redirects" icon="arrow-right-arrow-left" href="/api/redirects">
+    Start managing redirects via API
+  </Card>
+  <Card title="Analytics" icon="chart-line" href="/api/analytics">
+    Access analytics data programmatically
+  </Card>
+  <Card title="Error handling" icon="triangle-exclamation" href="/api/overview#error-handling">
+    Handle API errors gracefully
+  </Card>
+</CardGroup>

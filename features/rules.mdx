@@ -1,0 +1,612 @@
+---
+title: Conditional redirect rules engine
+description: Create sophisticated redirect rules based on geographic location, device type, browser, time, and custom conditions with support for A/B testing and percentage-based routing
+---
+
+Quickleap's rules engine enables intelligent, conditional redirects based on visitor attributes. Route traffic dynamically based on location, device, browser, time of day, and more.
+
+## Overview
+
+Rules allow you to override the default redirect destination based on conditions you define. When a visitor matches a rule's conditions, they are redirected to the rule's destination instead of the default.
+
+<Info>
+Rules are evaluated in priority order. The first matching rule is applied, so rule ordering matters.
+</Info>
+
+## Rule types
+
+Quickleap supports three types of redirect rules:
+
+<CardGroup cols={3}>
+  <Card title="Force redirect" icon="arrow-right">
+    When conditions match, always redirect to the specified destination URL.
+  </Card>
+  <Card title="Percentage redirect" icon="percent">
+    When conditions match, redirect a percentage of matching traffic to the specified destination.
+  </Card>
+  <Card title="A/B experiment" icon="flask">
+    When conditions match, split traffic between multiple variants with specified percentages.
+  </Card>
+</CardGroup>
+
+### Force redirect
+
+The most common rule type - when conditions are met, visitors are redirected to a specific destination.
+
+**Example use case:** Redirect mobile visitors to a mobile-optimized site
+
+```json
+{
+  "type": "force",
+  "action": {
+    "type": "redirect",
+    "url": "https://mobile.example.com"
+  }
+}
+```
+
+### Percentage redirect
+
+Redirect a percentage of matching traffic to an alternative destination, while the rest goes to the default.
+
+**Example use case:** Send 20% of US traffic to a beta version
+
+```json
+{
+  "type": "percentage",
+  "action": {
+    "type": "percentage_redirect",
+    "url": "https://beta.example.com",
+    "percentage": 20
+  }
+}
+```
+
+<Note>
+The remaining percentage (80% in this example) continues to the default redirect destination.
+</Note>
+
+### A/B experiment
+
+Split traffic between multiple variants for testing and optimization.
+
+**Example use case:** Test three different landing pages equally
+
+```json
+{
+  "type": "ab_experiment",
+  "action": {
+    "type": "ab_test",
+    "variants": [
+      {
+        "name": "Control",
+        "percentage": 33,
+        "url": "https://example.com/control"
+      },
+      {
+        "name": "Variant A",
+        "percentage": 33,
+        "url": "https://example.com/variant-a"
+      },
+      {
+        "name": "Variant B",
+        "percentage": 34,
+        "url": "https://example.com/variant-b"
+      }
+    ]
+  }
+}
+```
+
+<Warning>
+For A/B experiments, variant percentages must sum to 100.
+</Warning>
+
+## Conditions and attributes
+
+Rules are triggered when visitor attributes match your defined conditions. Quickleap provides extensive attributes across multiple categories.
+
+### Geographic attributes
+
+<Accordion title="Country">
+  **Type:** String  
+  **Operators:** equals, not_equals, in, not_in
+  
+  Match visitors from specific countries using ISO country codes.
+  
+  **Example:** Route UK visitors to a UK-specific site
+  ```json
+  {
+    "attribute": "country",
+    "operator": "equals",
+    "value": "GB"
+  }
+  ```
+</Accordion>
+
+<Accordion title="Region">
+  **Type:** String  
+  **Operators:** equals, not_equals, contains, in, not_in
+  
+  Match visitors from specific states, provinces, or regions.
+  
+  **Example:** Target California visitors
+  ```json
+  {
+    "attribute": "region",
+    "operator": "equals",
+    "value": "California"
+  }
+  ```
+</Accordion>
+
+<Accordion title="City">
+  **Type:** String  
+  **Operators:** equals, not_equals, contains, in, not_in
+  
+  Match visitors from specific cities for hyper-local targeting.
+</Accordion>
+
+### Device attributes
+
+<Accordion title="Device type">
+  **Type:** String  
+  **Operators:** equals, not_equals, in, not_in
+  
+  Match based on device category (desktop, mobile, tablet).
+  
+  **Example:** Redirect mobile users to a mobile app
+  ```json
+  {
+    "attribute": "device_type",
+    "operator": "equals",
+    "value": "mobile"
+  }
+  ```
+</Accordion>
+
+<Accordion title="Device brand">
+  **Type:** String  
+  **Operators:** equals, not_equals, in, not_in
+  
+  Match specific device manufacturers (Apple, Samsung, Google, etc.).
+</Accordion>
+
+<Accordion title="Device model">
+  **Type:** String  
+  **Operators:** equals, not_equals, contains, in, not_in
+  
+  Match specific device models for precise targeting.
+</Accordion>
+
+### Browser attributes
+
+<Accordion title="Browser name">
+  **Type:** String  
+  **Operators:** equals, not_equals, in, not_in
+  
+  Match visitors using specific browsers (Chrome, Firefox, Safari, Edge).
+  
+  **Example:** Send Safari users to a Safari-optimized page
+  ```json
+  {
+    "attribute": "browser_name",
+    "operator": "equals",
+    "value": "Safari"
+  }
+  ```
+</Accordion>
+
+<Accordion title="Browser version">
+  **Type:** String  
+  **Operators:** equals, not_equals, greater_than, less_than, contains
+  
+  Match specific browser versions for compatibility handling.
+</Accordion>
+
+### Operating system attributes
+
+<Accordion title="OS name">
+  **Type:** String  
+  **Operators:** equals, not_equals, in, not_in
+  
+  Match visitors by operating system (Windows, macOS, iOS, Android, Linux).
+</Accordion>
+
+<Accordion title="OS version">
+  **Type:** String  
+  **Operators:** equals, not_equals, greater_than, less_than, contains
+  
+  Match specific OS versions for version-specific routing.
+</Accordion>
+
+### Traffic source attributes
+
+<Accordion title="Referrer">
+  **Type:** String  
+  **Operators:** equals, not_equals, contains, not_contains, starts_with, ends_with
+  
+  Match based on the full referring URL.
+  
+  **Example:** Route traffic from a specific campaign
+  ```json
+  {
+    "attribute": "referrer",
+    "operator": "contains",
+    "value": "facebook.com"
+  }
+  ```
+</Accordion>
+
+<Accordion title="Referrer domain">
+  **Type:** String  
+  **Operators:** equals, not_equals, in, not_in
+  
+  Match based on just the referring domain for simpler rules.
+</Accordion>
+
+### Time-based attributes
+
+<Accordion title="Hour of day">
+  **Type:** Number (0-23)  
+  **Operators:** equals, not_equals, greater_than, less_than, between
+  
+  Match based on the hour of day (in UTC or visitor's timezone).
+  
+  **Example:** Route differently during business hours
+  ```json
+  {
+    "attribute": "hour_of_day",
+    "operator": "between",
+    "value": [9, 17]
+  }
+  ```
+</Accordion>
+
+<Accordion title="Day of week">
+  **Type:** Number (0-6, where 0 is Sunday)  
+  **Operators:** equals, not_equals, in, not_in
+  
+  Match based on the day of the week.
+  
+  **Example:** Weekend-specific routing
+  ```json
+  {
+    "attribute": "day_of_week",
+    "operator": "in",
+    "value": [0, 6]
+  }
+  ```
+</Accordion>
+
+### URL attributes
+
+<Accordion title="URL path">
+  **Type:** String  
+  **Operators:** equals, not_equals, contains, starts_with, ends_with, regex
+  
+  Match based on the URL path being visited.
+</Accordion>
+
+<Accordion title="Query parameter">
+  **Type:** String  
+  **Operators:** equals, not_equals, contains, exists, not_exists
+  
+  Match based on specific query parameter values.
+  
+  **Note:** Requires `param` field to specify which parameter to check.
+  
+  **Example:** Route based on UTM source
+  ```json
+  {
+    "attribute": "query_param",
+    "operator": "equals",
+    "param": "utm_source",
+    "value": "email"
+  }
+  ```
+</Accordion>
+
+### Technical attributes
+
+<Accordion title="Language">
+  **Type:** String  
+  **Operators:** equals, not_equals, contains, in, not_in
+  
+  Match based on browser language preferences.
+</Accordion>
+
+<Accordion title="User agent">
+  **Type:** String  
+  **Operators:** contains, not_contains, regex
+  
+  Match based on the raw user agent string for advanced detection.
+</Accordion>
+
+<Accordion title="IP address">
+  **Type:** String  
+  **Operators:** equals, not_equals, ip_range
+  
+  Match based on visitor IP address or IP ranges.
+</Accordion>
+
+## Operators
+
+Operators define how to compare attribute values:
+
+### Comparison operators
+
+- **equals**: Exact match
+- **not_equals**: Does not match
+- **greater_than**: Numeric greater than
+- **less_than**: Numeric less than
+- **greater_equal**: Numeric greater than or equal
+- **less_equal**: Numeric less than or equal
+- **between**: Numeric value within a range (requires two-value array)
+
+### String operators
+
+- **contains**: String contains the value
+- **not_contains**: String does not contain the value
+- **starts_with**: String begins with the value
+- **ends_with**: String ends with the value
+- **regex**: Matches a regular expression pattern
+
+### Array operators
+
+- **in**: Value is in the provided array
+- **not_in**: Value is not in the provided array
+
+### Existence operators
+
+- **exists**: Attribute is present
+- **not_exists**: Attribute is not present
+
+### Special operators
+
+- **ip_range**: IP address is within a CIDR range
+
+## Combining conditions
+
+Rules can have multiple conditions combined with logical operators.
+
+### Condition logic
+
+<Tabs>
+  <Tab title="AND logic">
+    All conditions must match for the rule to trigger.
+    
+    **Example:** Mobile users from the US
+    ```json
+    {
+      "conditionLogic": "AND",
+      "conditions": [
+        {
+          "attribute": "device_type",
+          "operator": "equals",
+          "value": "mobile"
+        },
+        {
+          "attribute": "country",
+          "operator": "equals",
+          "value": "US"
+        }
+      ]
+    }
+    ```
+  </Tab>
+  <Tab title="OR logic">
+    Any condition can match for the rule to trigger.
+    
+    **Example:** Traffic from US or Canada
+    ```json
+    {
+      "conditionLogic": "OR",
+      "conditions": [
+        {
+          "attribute": "country",
+          "operator": "equals",
+          "value": "US"
+        },
+        {
+          "attribute": "country",
+          "operator": "equals",
+          "value": "CA"
+        }
+      ]
+    }
+    ```
+  </Tab>
+</Tabs>
+
+<Note>
+For more complex logic combining AND and OR, use the `in` operator with an array of values.
+</Note>
+
+## Rule priority and ordering
+
+Rules are evaluated in priority order, and the first matching rule is applied.
+
+1. Rules are ordered by priority number (lower numbers = higher priority)
+2. The redirect engine evaluates rules from highest to lowest priority
+3. When a rule's conditions match, its action is applied immediately
+4. No further rules are evaluated after a match
+5. If no rules match, the default redirect destination is used
+
+<Warning>
+Carefully order your rules. A broad rule with high priority will prevent more specific rules from ever triggering.
+</Warning>
+
+### Reordering rules
+
+You can change rule priority at any time:
+
+1. Navigate to your redirect's rules
+2. Drag and drop rules to reorder them
+3. Changes are saved automatically
+4. New priority order takes effect immediately
+
+## Rule status
+
+Each rule can be in one of three states:
+
+<CardGroup cols={3}>
+  <Card title="Active" icon="circle-check">
+    Rule is evaluated and applied to matching traffic.
+  </Card>
+  <Card title="Inactive" icon="circle-xmark">
+    Rule is skipped during evaluation. Use for temporary disable.
+  </Card>
+  <Card title="Draft" icon="pencil">
+    Rule is being configured and not yet evaluated. Safe for testing.
+  </Card>
+</CardGroup>
+
+## Time-based rules
+
+Rules can be scheduled with start and end dates:
+
+- **Start date**: Rule becomes active at this date/time
+- **End date**: Rule becomes inactive at this date/time
+- Both dates are optional
+- Useful for time-limited campaigns or seasonal routing
+
+**Example:** Holiday campaign redirect
+```json
+{
+  "name": "Holiday Campaign 2026",
+  "startDate": "2026-11-25T00:00:00Z",
+  "endDate": "2026-12-26T23:59:59Z",
+  "conditions": [...],
+  "action": {
+    "type": "redirect",
+    "url": "https://example.com/holiday-sale"
+  }
+}
+```
+
+## Testing rules
+
+Quickleap provides a rule testing tool to verify rule logic before activating:
+
+1. Navigate to your redirect's rules
+2. Click **Test Rules**
+3. Enter user attributes to simulate (country, device, browser, etc.)
+4. See which rule would match and where traffic would be redirected
+5. Adjust conditions or priority as needed
+
+<Info>
+Test your rules thoroughly before activating them to ensure they behave as expected.
+</Info>
+
+## Rule analytics
+
+Track rule performance with dedicated analytics:
+
+- **Hit count**: Total hits for each rule
+- **Match percentage**: What percentage of traffic matches each rule
+- **Total rules**: Number of active, inactive, and draft rules
+- **Rule comparison**: Compare performance across rules
+
+<Note>
+Rule analytics help you optimize your routing strategy and identify underperforming or overlapping rules.
+</Note>
+
+## Common use cases
+
+<Accordion title="Mobile-optimized routing">
+  **Scenario:** Send mobile users to a mobile-specific site
+  
+  - Type: Force redirect
+  - Condition: device_type equals "mobile"
+  - Action: Redirect to mobile.example.com
+  - Logic: AND
+  
+  This ensures mobile users get an optimized experience.
+</Accordion>
+
+<Accordion title="Geographic localization">
+  **Scenario:** Route users to country-specific sites
+  
+  Create multiple rules with different priorities:
+  1. UK visitors → uk.example.com
+  2. DE visitors → de.example.com
+  3. FR visitors → fr.example.com
+  4. Everyone else → default destination
+  
+  Each rule uses country equals condition.
+</Accordion>
+
+<Accordion title="A/B testing landing pages">
+  **Scenario:** Test three landing page variants equally
+  
+  - Type: A/B experiment
+  - Conditions: None (test all traffic)
+  - Variants:
+    - Control: 33% → example.com/control
+    - Variant A: 33% → example.com/variant-a
+    - Variant B: 34% → example.com/variant-b
+</Accordion>
+
+<Accordion title="Gradual rollout">
+  **Scenario:** Roll out new site to 10% of traffic, gradually increasing
+  
+  - Type: Percentage redirect
+  - Conditions: None (applies to all)
+  - Percentage: Start at 10%, increase weekly
+  - Action: Redirect to new-site.example.com
+  
+  Update percentage as confidence grows.
+</Accordion>
+
+<Accordion title="Business hours routing">
+  **Scenario:** Route to live chat during business hours, contact form otherwise
+  
+  - Type: Force redirect
+  - Conditions:
+    - hour_of_day between 9 and 17 AND
+    - day_of_week not in [0, 6] (not weekend)
+  - Action: Redirect to example.com/chat
+  - Logic: AND
+  
+  Traffic outside these conditions goes to default contact form.
+</Accordion>
+
+<Accordion title="Campaign-specific landing pages">
+  **Scenario:** Route traffic from email campaigns to dedicated landing page
+  
+  - Type: Force redirect
+  - Condition: query_param utm_source equals "email"
+  - Action: Redirect to example.com/email-landing
+  
+  Requires query forwarding enabled to preserve UTM parameters.
+</Accordion>
+
+## Best practices
+
+<CardGroup cols={2}>
+  <Card title="Start simple" icon="seedling">
+    Begin with simple single-condition rules. Add complexity only when needed.
+  </Card>
+  <Card title="Use descriptive names" icon="tag">
+    Name rules clearly to understand their purpose at a glance: "Mobile users to app" instead of "Rule 1".
+  </Card>
+  <Card title="Test before activating" icon="vial">
+    Always use the rule tester to verify logic before setting rules to active status.
+  </Card>
+  <Card title="Monitor analytics" icon="chart-line">
+    Track rule hit counts to ensure rules are matching traffic as expected.
+  </Card>
+  <Card title="Order carefully" icon="list-ol">
+    Place specific rules before broad rules to prevent unintended matches.
+  </Card>
+  <Card title="Use draft status" icon="file-pen">
+    Set rules to draft while configuring to avoid accidental activation.
+  </Card>
+  <Card title="Document complex rules" icon="book">
+    Use the description field to explain the purpose of complex rule configurations.
+  </Card>
+  <Card title="Review regularly" icon="calendar-check">
+    Periodically review rules to remove outdated or low-hit rules.
+  </Card>
+</CardGroup>

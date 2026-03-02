@@ -1,0 +1,157 @@
+---
+title: Verify domain status
+description: Verify the DNS configuration and status of a domain
+---
+
+## Endpoint
+
+```
+POST /verify-domain
+```
+
+## Function signature
+
+```typescript
+export const verifyStatus = async (domain: string): Promise<AxiosResponse>
+```
+
+## Request body
+
+<ParamField path="domain" type="string" required>
+  The domain to be verified
+</ParamField>
+
+## Response
+
+<ResponseField name="status" type="number">
+  HTTP status code
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Verification results object
+  
+  <Expandable title="Verification object properties">
+    <ResponseField name="verified" type="boolean">
+      Whether the domain is properly configured
+    </ResponseField>
+    
+    <ResponseField name="domain" type="string">
+      The domain that was verified
+    </ResponseField>
+    
+    <ResponseField name="dnsRecords" type="array">
+      DNS records found for the domain
+    </ResponseField>
+    
+    <ResponseField name="errors" type="array">
+      Any configuration errors or issues detected
+    </ResponseField>
+    
+    <ResponseField name="lastChecked" type="string">
+      Timestamp of the verification check
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Code example
+
+<CodeGroup>
+
+```typescript Example
+import { verifyStatus } from '@/lib/api';
+
+const checkDomainStatus = async (domain: string) => {
+  const response = await verifyStatus(domain);
+  
+  if (response.data.verified) {
+    console.log(`${domain} is properly configured`);
+  } else {
+    console.log(`Configuration issues found:`, response.data.errors);
+  }
+  
+  return response.data;
+};
+```
+
+```typescript With retry logic
+import { verifyStatus } from '@/lib/api';
+
+const verifyWithRetry = async (
+  domain: string,
+  maxAttempts: number = 3,
+  delayMs: number = 2000
+) => {
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const response = await verifyStatus(domain);
+    
+    if (response.data.verified) {
+      return response.data;
+    }
+    
+    if (attempt < maxAttempts) {
+      console.log(`Attempt ${attempt} failed, retrying...`);
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+  }
+  
+  throw new Error(`Domain verification failed after ${maxAttempts} attempts`);
+};
+```
+
+```typescript Check multiple domains
+import { verifyStatus } from '@/lib/api';
+
+const verifyMultipleDomains = async (domains: string[]) => {
+  const verificationPromises = domains.map(domain => verifyStatus(domain));
+  
+  try {
+    const results = await Promise.all(verificationPromises);
+    const verified = results.filter(r => r.data.verified);
+    const failed = results.filter(r => !r.data.verified);
+    
+    console.log(`Verified: ${verified.length}, Failed: ${failed.length}`);
+    return results.map(r => r.data);
+  } catch (error) {
+    console.error('Failed to verify domains:', error);
+    throw error;
+  }
+};
+```
+
+</CodeGroup>
+
+<Note>
+  Domain verification checks DNS records to ensure the domain is properly configured to work with Quickleap. This process may take a few minutes after DNS changes are made.
+</Note>
+
+## Common verification issues
+
+<Expandable title="DNS propagation delay">
+  DNS changes can take up to 48 hours to propagate globally. If verification fails immediately after making DNS changes, wait a few minutes and try again.
+</Expandable>
+
+<Expandable title="Incorrect DNS records">
+  Ensure that your DNS records match the configuration provided by Quickleap. Check for typos in the record values.
+</Expandable>
+
+<Expandable title="Conflicting records">
+  Multiple DNS records of the same type can cause conflicts. Remove any duplicate or conflicting records.
+</Expandable>
+
+## Error responses
+
+<Expandable title="400 - Bad Request">
+  Returned when the domain parameter is invalid or missing
+</Expandable>
+
+<Expandable title="401 - Unauthorized">
+  Returned when the user is not authenticated
+</Expandable>
+
+<Expandable title="422 - Unprocessable Entity">
+  Returned when the domain format is invalid
+</Expandable>
+
+<Expandable title="500 - Internal Server Error">
+  Returned when an unexpected error occurs during verification
+</Expandable>

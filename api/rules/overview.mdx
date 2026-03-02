@@ -1,0 +1,225 @@
+---
+title: Rules API overview
+description: Control traffic routing with conditional rules and A/B testing
+---
+
+The Rules API enables advanced traffic routing based on user attributes, device characteristics, geographic location, and more. Rules are evaluated in priority order and support force redirects, percentage-based routing, and A/B experiments.
+
+## Rule types
+
+Quickleap supports three types of rules:
+
+### Force redirect
+
+Unconditionally redirects all matching traffic to a specific destination URL. When conditions are met, 100% of traffic is sent to the configured URL.
+
+```typescript
+type: 'force'
+action: {
+  type: 'redirect',
+  url: 'https://example.com/destination'
+}
+```
+
+### Percentage redirect
+
+Redirects a percentage of matching traffic to an alternate destination. Useful for gradual rollouts or load distribution.
+
+```typescript
+type: 'percentage'
+action: {
+  type: 'percentage_redirect',
+  url: 'https://example.com/variant',
+  percentage: 25
+}
+```
+
+### A/B experiment
+
+Splits matching traffic across multiple variants with configurable percentages. Ideal for testing different destinations.
+
+```typescript
+type: 'ab_experiment'
+action: {
+  type: 'ab_test',
+  variants: [
+    { name: 'Control', percentage: 50, url: 'https://example.com/a' },
+    { name: 'Variant B', percentage: 50, url: 'https://example.com/b' }
+  ]
+}
+```
+
+## Conditions and operators
+
+Rules evaluate user attributes using conditions. Each condition consists of an attribute, operator, and value.
+
+### Condition logic
+
+Multiple conditions can be combined using:
+
+- `AND` - All conditions must match
+- `OR` - At least one condition must match
+
+### Supported operators
+
+<Expandable title="String operators">
+
+| Operator | Key | Description | Value type |
+|----------|-----|-------------|-----------|
+| Equals | `equals` | Exact match | Single |
+| Not equals | `not_equals` | Does not match | Single |
+| Contains | `contains` | String contains | Single |
+| Not contains | `not_contains` | String does not contain | Single |
+| Starts with | `starts_with` | String starts with | Single |
+| Ends with | `ends_with` | String ends with | Single |
+| In | `in` | Value in list | Array |
+| Not in | `not_in` | Value not in list | Array |
+| Regex | `regex` | Regular expression match | Single |
+
+</Expandable>
+
+<Expandable title="Numeric operators">
+
+| Operator | Key | Description | Value type |
+|----------|-----|-------------|-----------|
+| Greater than | `greater_than` | Value &gt; threshold | Single |
+| Less than | `less_than` | Value &lt; threshold | Single |
+| Greater or equal | `greater_equal` | Value &gt;= threshold | Single |
+| Less or equal | `less_equal` | Value &lt;= threshold | Single |
+| Between | `between` | Value in range | Range |
+
+</Expandable>
+
+<Expandable title="Existence operators">
+
+| Operator | Key | Description | Value type |
+|----------|-----|-------------|-----------|
+| Exists | `exists` | Attribute has value | None |
+| Not exists | `not_exists` | Attribute is empty | None |
+
+</Expandable>
+
+<Expandable title="Special operators">
+
+| Operator | Key | Description | Value type |
+|----------|-----|-------------|-----------|
+| IP range | `ip_range` | IP in CIDR range | Single |
+
+</Expandable>
+
+### Available attributes
+
+Rules can match on these user attributes:
+
+<Expandable title="Geography">
+
+- `country` - Two-letter country code (US, GB, etc.)
+- `region` - State or region name
+- `city` - City name
+
+</Expandable>
+
+<Expandable title="Device">
+
+- `device_type` - Device category (mobile, desktop, tablet)
+- `device_brand` - Manufacturer (Apple, Samsung, etc.)
+- `device_model` - Specific model (iPhone 14, Galaxy S23, etc.)
+
+</Expandable>
+
+<Expandable title="Browser">
+
+- `browser_name` - Browser name (Chrome, Safari, Firefox, etc.)
+- `browser_version` - Browser version number
+
+</Expandable>
+
+<Expandable title="System">
+
+- `os_name` - Operating system (iOS, Android, Windows, macOS, etc.)
+- `os_version` - OS version number
+
+</Expandable>
+
+<Expandable title="Traffic source">
+
+- `referrer` - Full referrer URL
+- `referrer_domain` - Referrer domain only
+
+</Expandable>
+
+<Expandable title="Time">
+
+- `hour_of_day` - Hour in 24-hour format (0-23)
+- `day_of_week` - Day of week (0=Sunday, 6=Saturday)
+
+</Expandable>
+
+<Expandable title="Language">
+
+- `language` - Language code (en, es, fr, etc.)
+
+</Expandable>
+
+<Expandable title="URL">
+
+- `url_path` - Request path component
+- `query_param` - Specific query parameter value (requires `param` field)
+
+</Expandable>
+
+<Expandable title="Technical">
+
+- `user_agent` - Raw user agent string
+- `ip_address` - Client IP address
+
+</Expandable>
+
+## Rule evaluation
+
+Rules are evaluated in priority order (lower numbers first). The first matching rule determines the redirect behavior:
+
+1. Rules are sorted by priority (ascending)
+2. Each rule's conditions are evaluated against user attributes
+3. First rule where all conditions match (AND logic) or any condition matches (OR logic) is selected
+4. The rule's action determines the final destination URL
+5. If no rules match, the default redirect URL is used
+
+## Rule status
+
+Rules can have three statuses:
+
+- `active` - Rule is evaluated for incoming traffic
+- `inactive` - Rule exists but is not evaluated
+- `draft` - Rule is being created or modified
+
+## Endpoints
+
+<CardGroup cols={2}>
+  <Card title="List rules" icon="list" href="/api/rules/list">
+    Get all rules for a redirect
+  </Card>
+  <Card title="Create rule" icon="plus" href="/api/rules/create">
+    Create a new rule
+  </Card>
+  <Card title="Update rule" icon="pen" href="/api/rules/update">
+    Update an existing rule
+  </Card>
+  <Card title="Delete rule" icon="trash" href="/api/rules/delete">
+    Delete a rule
+  </Card>
+  <Card title="Test rule" icon="flask" href="/api/rules/test">
+    Test rule evaluation
+  </Card>
+</CardGroup>
+
+## Additional operations
+
+Beyond the core CRUD operations, the Rules API supports:
+
+- **Reorder rules** - Change rule priorities
+- **Toggle status** - Switch between active/inactive/draft
+- **Duplicate rule** - Clone an existing rule
+- **Get attributes** - Fetch available attributes and operators
+- **Get attribute values** - Retrieve possible values from analytics
+- **Get analytics** - View rule hit counts and performance

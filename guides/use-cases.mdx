@@ -1,0 +1,454 @@
+---
+title: Use cases
+description: Real-world scenarios and implementation guides for Quickleap
+---
+
+Explore common use cases for Quickleap and learn how to implement them effectively.
+
+## Domain migration
+
+Redirect all traffic from an old domain to a new one while preserving SEO value and user bookmarks.
+
+### Scenario
+
+You're rebranding from `oldcompany.com` to `newcompany.com` and need to redirect all existing traffic without losing search engine rankings or breaking user bookmarks.
+
+### Implementation
+
+<Steps>
+  <Step title="Create the redirect">
+    Set up a permanent redirect with path and query forwarding enabled:
+    
+    ```javascript
+    {
+      "fromDomain": "oldcompany.com",
+      "toDomain": "https://newcompany.com",
+      "redirectType": "permanent",
+      "pathForwarding": true,
+      "queryForwarding": true,
+      "samplingRate": 1.0
+    }
+    ```
+  </Step>
+  
+  <Step title="Verify DNS configuration">
+    Update your DNS records to point to Quickleap's servers and verify the domain:
+    
+    ```javascript
+    await verifyStatus('oldcompany.com');
+    ```
+  </Step>
+  
+  <Step title="Monitor the migration">
+    Use analytics to track the migration:
+    - Monitor traffic volume to ensure all requests are being captured
+    - Check path analytics to identify popular pages
+    - Review referrer data to understand traffic sources
+  </Step>
+</Steps>
+
+<Tip>
+Keep the redirect active for at least 12 months to allow search engines to fully transfer SEO value to the new domain.
+</Tip>
+
+## A/B testing landing pages
+
+Test different landing pages or offers by splitting traffic between multiple destinations.
+
+### Scenario
+
+You want to test two different landing page designs to see which converts better. Split traffic 50/50 between variant A and variant B.
+
+### Implementation
+
+Use an A/B test rule to distribute traffic evenly:
+
+```javascript
+{
+  "name": "Homepage A/B Test",
+  "type": "ab_experiment",
+  "conditions": [],
+  "conditionLogic": "AND",
+  "action": {
+    "type": "ab_test",
+    "variants": [
+      {
+        "name": "Control",
+        "percentage": 50,
+        "url": "https://mysite.com/landing-v1"
+      },
+      {
+        "name": "Variant",
+        "percentage": 50,
+        "url": "https://mysite.com/landing-v2"
+      }
+    ]
+  },
+  "startDate": "2026-03-01T00:00:00Z",
+  "endDate": "2026-03-31T23:59:59Z"
+}
+```
+
+<Info>
+Set start and end dates to automatically activate and deactivate the test. After the test concludes, create a permanent redirect to the winning variant.
+</Info>
+
+### Advanced: Segment by traffic source
+
+Test different pages for organic vs paid traffic:
+
+<Accordion title="A/B test for organic search traffic only">
+```javascript
+{
+  "name": "A/B Test - Organic Traffic",
+  "type": "ab_experiment",
+  "conditions": [
+    {
+      "attribute": "referrer_domain",
+      "operator": "in",
+      "value": ["google.com", "bing.com", "duckduckgo.com"]
+    }
+  ],
+  "conditionLogic": "OR",
+  "action": {
+    "type": "ab_test",
+    "variants": [
+      { "name": "Control", "percentage": 50, "url": "https://mysite.com/seo-v1" },
+      { "name": "Variant", "percentage": 50, "url": "https://mysite.com/seo-v2" }
+    ]
+  }
+}
+```
+This rule only applies to visitors from search engines, allowing you to test SEO-optimized pages separately.
+</Accordion>
+
+## Geographic routing
+
+Direct visitors to region-specific content based on their location.
+
+### Scenario
+
+Your company operates in multiple countries with localized websites. Route visitors to the appropriate regional site based on their country.
+
+### Implementation
+
+Create rules for each region with appropriate priority:
+
+<CodeGroup>
+```javascript Europe
+{
+  "name": "European Visitors",
+  "type": "force",
+  "priority": 1,
+  "conditions": [
+    {
+      "attribute": "country",
+      "operator": "in",
+      "value": ["GB", "DE", "FR", "ES", "IT"]
+    }
+  ],
+  "conditionLogic": "AND",
+  "action": {
+    "type": "redirect",
+    "url": "https://eu.mycompany.com"
+  }
+}
+```
+
+```javascript Asia Pacific
+{
+  "name": "APAC Visitors",
+  "type": "force",
+  "priority": 2,
+  "conditions": [
+    {
+      "attribute": "country",
+      "operator": "in",
+      "value": ["SG", "JP", "AU", "IN", "CN"]
+    }
+  ],
+  "conditionLogic": "AND",
+  "action": {
+    "type": "redirect",
+    "url": "https://apac.mycompany.com"
+  }
+}
+```
+
+```javascript Default
+{
+  "name": "Default - Americas",
+  "type": "force",
+  "priority": 999,
+  "conditions": [],
+  "conditionLogic": "AND",
+  "action": {
+    "type": "redirect",
+    "url": "https://www.mycompany.com"
+  }
+}
+```
+</CodeGroup>
+
+<Warning>
+Always include a catch-all rule with low priority to handle visitors from regions not explicitly listed.
+</Warning>
+
+### City-level routing
+
+For more granular targeting, route based on city:
+
+```javascript
+{
+  "name": "New York Visitors - Special Offer",
+  "type": "force",
+  "conditions": [
+    {
+      "attribute": "city",
+      "operator": "equals",
+      "value": "New York"
+    }
+  ],
+  "conditionLogic": "AND",
+  "action": {
+    "type": "redirect",
+    "url": "https://mysite.com/nyc-promo"
+  }
+}
+```
+
+## Mobile vs desktop redirects
+
+Provide optimized experiences based on device type.
+
+### Scenario
+
+You have separate mobile and desktop experiences and want to route users to the appropriate version based on their device.
+
+### Implementation
+
+<Steps>
+  <Step title="Create mobile redirect rule">
+    ```javascript
+    {
+      "name": "Mobile Devices",
+      "type": "force",
+      "priority": 1,
+      "conditions": [
+        {
+          "attribute": "device_type",
+          "operator": "equals",
+          "value": "mobile"
+        }
+      ],
+      "conditionLogic": "AND",
+      "action": {
+        "type": "redirect",
+        "url": "https://m.mysite.com"
+      }
+    }
+    ```
+  </Step>
+  
+  <Step title="Create tablet redirect rule">
+    ```javascript
+    {
+      "name": "Tablet Devices",
+      "type": "force",
+      "priority": 2,
+      "conditions": [
+        {
+          "attribute": "device_type",
+          "operator": "equals",
+          "value": "tablet"
+        }
+      ],
+      "conditionLogic": "AND",
+      "action": {
+        "type": "redirect",
+        "url": "https://tablet.mysite.com"
+      }
+    }
+    ```
+  </Step>
+  
+  <Step title="Default to desktop">
+    ```javascript
+    {
+      "name": "Desktop Devices",
+      "type": "force",
+      "priority": 999,
+      "conditions": [],
+      "conditionLogic": "AND",
+      "action": {
+        "type": "redirect",
+        "url": "https://www.mysite.com"
+      }
+    }
+    ```
+  </Step>
+</Steps>
+
+<Note>
+Modern responsive design often eliminates the need for separate mobile sites. Consider whether device-based redirects are necessary for your use case.
+</Note>
+
+### Advanced: Browser-specific redirects
+
+Redirect based on browser for feature compatibility:
+
+```javascript
+{
+  "name": "Legacy Browsers",
+  "type": "force",
+  "conditions": [
+    {
+      "attribute": "browser_name",
+      "operator": "in",
+      "value": ["Internet Explorer", "IE"]
+    }
+  ],
+  "conditionLogic": "AND",
+  "action": {
+    "type": "redirect",
+    "url": "https://mysite.com/legacy-version"
+  }
+}
+```
+
+## Marketing campaign tracking
+
+Track campaign performance and route traffic based on campaign parameters.
+
+### Scenario
+
+You're running multiple marketing campaigns and want to route traffic to campaign-specific landing pages while tracking performance.
+
+### Implementation
+
+Use query parameter conditions to route based on UTM parameters:
+
+<CodeGroup>
+```javascript Email Campaign
+{
+  "name": "Email Campaign - Spring Sale",
+  "type": "force",
+  "priority": 1,
+  "conditions": [
+    {
+      "attribute": "query_param",
+      "operator": "equals",
+      "value": "email",
+      "param": "utm_source"
+    },
+    {
+      "attribute": "query_param",
+      "operator": "equals",
+      "value": "spring-sale",
+      "param": "utm_campaign"
+    }
+  ],
+  "conditionLogic": "AND",
+  "action": {
+    "type": "redirect",
+    "url": "https://mysite.com/spring-sale?source=email"
+  }
+}
+```
+
+```javascript Social Media Campaign
+{
+  "name": "Social Media Campaign",
+  "type": "force",
+  "priority": 2,
+  "conditions": [
+    {
+      "attribute": "query_param",
+      "operator": "in",
+      "value": ["facebook", "instagram", "twitter"],
+      "param": "utm_source"
+    }
+  ],
+  "conditionLogic": "AND",
+  "action": {
+    "type": "redirect",
+    "url": "https://mysite.com/social-landing"
+  }
+}
+```
+</CodeGroup>
+
+<Tip>
+Enable query forwarding to preserve UTM parameters for downstream analytics tools like Google Analytics.
+</Tip>
+
+### Track referrer sources
+
+Route traffic differently based on referrer:
+
+```javascript
+{
+  "name": "Reddit Traffic",
+  "type": "force",
+  "conditions": [
+    {
+      "attribute": "referrer_domain",
+      "operator": "contains",
+      "value": "reddit.com"
+    }
+  ],
+  "conditionLogic": "AND",
+  "action": {
+    "type": "redirect",
+    "url": "https://mysite.com/reddit-welcome"
+  }
+}
+```
+
+### Time-based campaigns
+
+Combine time and campaign conditions for flash sales:
+
+```javascript
+{
+  "name": "Flash Sale - Weekends Only",
+  "type": "force",
+  "conditions": [
+    {
+      "attribute": "day_of_week",
+      "operator": "in",
+      "value": [6, 7]
+    }
+  ],
+  "conditionLogic": "AND",
+  "action": {
+    "type": "redirect",
+    "url": "https://mysite.com/weekend-flash-sale"
+  },
+  "startDate": "2026-03-01T00:00:00Z",
+  "endDate": "2026-03-31T23:59:59Z"
+}
+```
+
+<Info>
+Use campaign analytics to track UTM parameters and measure the effectiveness of different traffic sources.
+</Info>
+
+## Testing before activation
+
+Before activating any rule, test it using the rule evaluation endpoint:
+
+```javascript
+const testResult = await testRuleEvaluation(redirectId, {
+  userAttributes: {
+    country: 'US',
+    device_type: 'mobile',
+    browser_name: 'Chrome',
+    referrer_domain: 'google.com'
+  }
+});
+
+console.log('Rule evaluation:', testResult.data.result);
+```
+
+This helps verify that your conditions match the intended traffic before going live.

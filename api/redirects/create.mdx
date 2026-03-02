@@ -1,0 +1,130 @@
+---
+title: Create a redirect
+description: Create a new domain redirect with customizable settings
+---
+
+## Endpoint
+
+```
+POST /add-redirect
+```
+
+## Function signature
+
+```typescript
+export const addRedirect = async (data: AddRedirectProps): Promise<AxiosResponse>
+```
+
+## Request body
+
+<ParamField path="fromDomain" type="string" required>
+  The domain from which the redirect originates
+</ParamField>
+
+<ParamField path="toDomain" type="string" required>
+  The domain to which the redirect points
+</ParamField>
+
+<ParamField path="redirectType" type="RedirectType" required>
+  The type of redirect. Must be either `permanent` or `temporary`
+</ParamField>
+
+<ParamField path="pathForwarding" type="boolean" required>
+  Indicates whether the path should be forwarded
+</ParamField>
+
+<ParamField path="queryForwarding" type="boolean" required>
+  Indicates whether the query parameters should be forwarded
+</ParamField>
+
+<ParamField path="samplingRate" type="number" required>
+  The sampling rate for analytics. Must be a value between 0 and 1
+</ParamField>
+
+## Type definitions
+
+```typescript
+type AddRedirectProps = {
+  fromDomain: string;
+  toDomain: string;
+  redirectType: RedirectType;
+  pathForwarding: boolean;
+  queryForwarding: boolean;
+  samplingRate: number;
+};
+
+enum RedirectType {
+  Permanent = 'permanent',
+  Temporary = 'temporary',
+}
+```
+
+## Response
+
+<ResponseField name="status" type="number">
+  HTTP status code
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  The created redirect object
+</ResponseField>
+
+## Code example
+
+<CodeGroup>
+
+```typescript Example
+import { addRedirect } from '@/lib/api';
+import { RedirectType } from '@/lib/constants';
+
+const createRedirect = async () => {
+  const response = await addRedirect({
+    fromDomain: 'example.com',
+    toDomain: 'newsite.com',
+    redirectType: RedirectType.Permanent,
+    pathForwarding: true,
+    queryForwarding: true,
+    samplingRate: 1.0
+  });
+  
+  return response.data;
+};
+```
+
+```typescript With path forwarding disabled
+import { addRedirect } from '@/lib/api';
+import { RedirectType } from '@/lib/constants';
+
+const response = await addRedirect({
+  fromDomain: 'old-domain.com',
+  toDomain: 'new-domain.com',
+  redirectType: RedirectType.Temporary,
+  pathForwarding: false,
+  queryForwarding: false,
+  samplingRate: 0.5
+});
+```
+
+</CodeGroup>
+
+<Note>
+  The `samplingRate` parameter controls what percentage of traffic is tracked for analytics. A value of 1.0 means 100% of requests are tracked, while 0.5 means 50% are sampled.
+</Note>
+
+## Error responses
+
+<Expandable title="400 - Bad Request">
+  Returned when the request body is invalid or missing required fields
+</Expandable>
+
+<Expandable title="401 - Unauthorized">
+  Returned when the user is not authenticated
+</Expandable>
+
+<Expandable title="409 - Conflict">
+  Returned when a redirect already exists for the specified `fromDomain`
+</Expandable>
+
+<Expandable title="500 - Internal Server Error">
+  Returned when an unexpected error occurs on the server
+</Expandable>

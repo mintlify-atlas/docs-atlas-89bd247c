@@ -1,0 +1,370 @@
+---
+title: Test rule evaluation
+description: Simulate rule matching with user attributes
+---
+
+## Test rule evaluation
+
+```
+POST /rules/redirect/:redirectId/test
+```
+
+Simulates rule evaluation by testing user attributes against all active rules for a redirect. Returns the matching rule and resulting destination URL without actually performing a redirect.
+
+### Path parameters
+
+<ParamField path="redirectId" type="string" required>
+  The ID of the redirect whose rules to test
+</ParamField>
+
+### Request body
+
+<ParamField body="userAttributes" type="UserAttributes" required>
+  User attribute values to test against rules
+  
+  <Expandable title="UserAttributes properties">
+    <ParamField body="country" type="string">
+      Two-letter country code (e.g., "US", "GB")
+    </ParamField>
+    
+    <ParamField body="region" type="string">
+      State or region name
+    </ParamField>
+    
+    <ParamField body="city" type="string">
+      City name
+    </ParamField>
+    
+    <ParamField body="device_type" type="string">
+      Device category (e.g., "mobile", "desktop", "tablet")
+    </ParamField>
+    
+    <ParamField body="device_brand" type="string">
+      Device manufacturer (e.g., "Apple", "Samsung")
+    </ParamField>
+    
+    <ParamField body="device_model" type="string">
+      Device model (e.g., "iPhone 14", "Galaxy S23")
+    </ParamField>
+    
+    <ParamField body="browser_name" type="string">
+      Browser name (e.g., "Chrome", "Safari", "Firefox")
+    </ParamField>
+    
+    <ParamField body="browser_version" type="string">
+      Browser version
+    </ParamField>
+    
+    <ParamField body="os_name" type="string">
+      Operating system (e.g., "iOS", "Android", "Windows")
+    </ParamField>
+    
+    <ParamField body="os_version" type="string">
+      OS version
+    </ParamField>
+    
+    <ParamField body="referrer" type="string">
+      Full referrer URL
+    </ParamField>
+    
+    <ParamField body="referrer_domain" type="string">
+      Referrer domain only
+    </ParamField>
+    
+    <ParamField body="hour_of_day" type="number">
+      Hour in 24-hour format (0-23)
+    </ParamField>
+    
+    <ParamField body="day_of_week" type="number">
+      Day of week (0=Sunday, 6=Saturday)
+    </ParamField>
+    
+    <ParamField body="language" type="string">
+      Language code (e.g., "en", "es", "fr")
+    </ParamField>
+    
+    <ParamField body="url_path" type="string">
+      Request path
+    </ParamField>
+    
+    <ParamField body="query_params" type="Record<string, string>">
+      Query parameters as key-value pairs
+    </ParamField>
+    
+    <ParamField body="user_agent" type="string">
+      Raw user agent string
+    </ParamField>
+    
+    <ParamField body="ip_address" type="string">
+      Client IP address
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+### Response
+
+<ResponseField name="result" type="RuleEvaluationResult | null">
+  The evaluation result, or null if no rules matched
+  
+  <Expandable title="RuleEvaluationResult properties">
+    <ResponseField name="url" type="string">
+      The destination URL that would be used
+    </ResponseField>
+    
+    <ResponseField name="ruleId" type="number">
+      ID of the matching rule
+    </ResponseField>
+    
+    <ResponseField name="ruleName" type="string">
+      Name of the matching rule
+    </ResponseField>
+    
+    <ResponseField name="actionType" type="string">
+      Type of action: "redirect", "percentage_redirect", or "ab_test"
+    </ResponseField>
+    
+    <ResponseField name="percentage" type="number">
+      For percentage redirects, the configured percentage
+    </ResponseField>
+    
+    <ResponseField name="variant" type="string">
+      For A/B tests, the selected variant name
+    </ResponseField>
+    
+    <ResponseField name="triggered" type="boolean">
+      Whether the rule was triggered
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="userAttributes" type="UserAttributes">
+  The user attributes that were tested (echoed back)
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Human-readable message about the test result
+</ResponseField>
+
+### Examples
+
+<CodeGroup>
+
+```typescript Test mobile device rule
+import { testRuleEvaluation } from '@quickleap/sdk';
+
+const response = await testRuleEvaluation('redirect_123', {
+  userAttributes: {
+    device_type: 'mobile',
+    country: 'US',
+    browser_name: 'Safari',
+    os_name: 'iOS'
+  }
+});
+
+if (response.data.result) {
+  console.log(`Matched rule: ${response.data.result.ruleName}`);
+  console.log(`Destination: ${response.data.result.url}`);
+  console.log(`Action type: ${response.data.result.actionType}`);
+} else {
+  console.log('No rules matched - would use default redirect');
+}
+```
+
+```typescript Test geographic targeting
+import { testRuleEvaluation } from '@quickleap/sdk';
+
+const response = await testRuleEvaluation('redirect_123', {
+  userAttributes: {
+    country: 'DE',
+    region: 'Bavaria',
+    city: 'Munich',
+    language: 'de'
+  }
+});
+
+console.log(response.data.message);
+if (response.data.result?.triggered) {
+  console.log(`Rule triggered: ${response.data.result.ruleName}`);
+  console.log(`Destination: ${response.data.result.url}`);
+}
+```
+
+```typescript Test query parameter rule
+import { testRuleEvaluation } from '@quickleap/sdk';
+
+const response = await testRuleEvaluation('redirect_123', {
+  userAttributes: {
+    url_path: '/products',
+    query_params: {
+      campaign: 'spring2026',
+      utm_source: 'email'
+    }
+  }
+});
+
+if (response.data.result) {
+  console.log(`Campaign rule matched: ${response.data.result.ruleName}`);
+  console.log(`Redirecting to: ${response.data.result.url}`);
+}
+```
+
+```typescript Test A/B experiment
+import { testRuleEvaluation } from '@quickleap/sdk';
+
+const response = await testRuleEvaluation('redirect_123', {
+  userAttributes: {
+    referrer_domain: 'google.com',
+    device_type: 'desktop',
+    country: 'US'
+  }
+});
+
+if (response.data.result?.actionType === 'ab_test') {
+  console.log(`A/B test matched: ${response.data.result.ruleName}`);
+  console.log(`Variant selected: ${response.data.result.variant}`);
+  console.log(`URL: ${response.data.result.url}`);
+}
+```
+
+```typescript Test time-based rule
+import { testRuleEvaluation } from '@quickleap/sdk';
+
+const now = new Date();
+
+const response = await testRuleEvaluation('redirect_123', {
+  userAttributes: {
+    hour_of_day: now.getHours(),
+    day_of_week: now.getDay(),
+    country: 'US'
+  }
+});
+
+console.log(`Testing at hour ${now.getHours()}, day ${now.getDay()}`);
+if (response.data.result) {
+  console.log(`Time-based rule: ${response.data.result.ruleName}`);
+  console.log(`Would redirect to: ${response.data.result.url}`);
+}
+```
+
+```typescript Batch test multiple scenarios
+import { testRuleEvaluation } from '@quickleap/sdk';
+
+const scenarios = [
+  {
+    name: 'Mobile iOS',
+    attributes: { device_type: 'mobile', os_name: 'iOS' }
+  },
+  {
+    name: 'Desktop Chrome',
+    attributes: { device_type: 'desktop', browser_name: 'Chrome' }
+  },
+  {
+    name: 'EU User',
+    attributes: { country: 'DE', language: 'de' }
+  }
+];
+
+for (const scenario of scenarios) {
+  const response = await testRuleEvaluation('redirect_123', {
+    userAttributes: scenario.attributes
+  });
+  
+  console.log(`\n${scenario.name}:`);
+  if (response.data.result) {
+    console.log(`  ✓ Rule: ${response.data.result.ruleName}`);
+    console.log(`  → URL: ${response.data.result.url}`);
+  } else {
+    console.log('  ✗ No rules matched');
+  }
+}
+```
+
+</CodeGroup>
+
+## Get rule analytics
+
+```
+GET /rules/redirect/:redirectId/analytics
+```
+
+Retrieve analytics and statistics for all rules associated with a redirect.
+
+### Path parameters
+
+<ParamField path="redirectId" type="string" required>
+  The ID of the redirect
+</ParamField>
+
+### Response
+
+<ResponseField name="analytics" type="RuleAnalyticsItem[]">
+  Array of rule analytics
+  
+  <Expandable title="RuleAnalyticsItem properties">
+    <ResponseField name="id" type="number">
+      Rule ID
+    </ResponseField>
+    
+    <ResponseField name="name" type="string">
+      Rule name
+    </ResponseField>
+    
+    <ResponseField name="type" type="RuleType">
+      Rule type
+    </ResponseField>
+    
+    <ResponseField name="status" type="RuleStatus">
+      Current status
+    </ResponseField>
+    
+    <ResponseField name="hitCount" type="number">
+      Number of matches
+    </ResponseField>
+    
+    <ResponseField name="percentage" type="string">
+      Percentage of total hits
+    </ResponseField>
+    
+    <ResponseField name="createdAt" type="string">
+      Creation date
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="totalHits" type="number">
+  Total hits across all rules
+</ResponseField>
+
+<ResponseField name="totalRules" type="number">
+  Total number of rules
+</ResponseField>
+
+<ResponseField name="activeRules" type="number">
+  Number of active rules
+</ResponseField>
+
+### Example
+
+<CodeGroup>
+
+```typescript Get rule analytics
+import { getRuleAnalytics } from '@quickleap/sdk';
+
+const response = await getRuleAnalytics('redirect_123');
+const { analytics, totalHits, totalRules, activeRules } = response.data;
+
+console.log(`Total rules: ${totalRules}`);
+console.log(`Active: ${activeRules}`);
+console.log(`Total hits: ${totalHits}`);
+
+console.log('\nRule performance:');
+analytics.forEach(rule => {
+  console.log(`${rule.name}: ${rule.hitCount} (${rule.percentage}%)`);
+});
+```
+
+</CodeGroup>
+
+<Note>
+  The test endpoint does not increment hit counts or affect analytics. It's safe to call repeatedly for testing purposes.
+</Note>

@@ -1,0 +1,354 @@
+---
+title: Create a rule
+description: Add a new routing rule to a redirect
+---
+
+## Endpoint
+
+```
+POST /rules/redirect/:redirectId
+```
+
+Creates a new rule for the specified redirect. The rule will be created with the lowest priority (highest number) by default.
+
+## Path parameters
+
+<ParamField path="redirectId" type="string" required>
+  The ID of the redirect to add the rule to
+</ParamField>
+
+## Request body
+
+<ParamField body="name" type="string" required>
+  Human-readable name for the rule
+</ParamField>
+
+<ParamField body="description" type="string">
+  Optional description explaining the rule's purpose
+</ParamField>
+
+<ParamField body="type" type="RuleType" required>
+  Rule type: `force`, `percentage`, or `ab_experiment`
+</ParamField>
+
+<ParamField body="conditions" type="RuleCondition[]" required>
+  Array of conditions to evaluate. At least one condition is required.
+  
+  <Expandable title="RuleCondition properties">
+    <ParamField body="attribute" type="AttributeKey" required>
+      The user attribute to evaluate (e.g., `country`, `device_type`, `browser_name`)
+    </ParamField>
+    
+    <ParamField body="operator" type="OperatorKey" required>
+      Comparison operator (e.g., `equals`, `contains`, `in`, `greater_than`)
+    </ParamField>
+    
+    <ParamField body="value" type="string | number | string[] | number[] | [number, number]">
+      Value to compare against. Type depends on operator:
+      - Single value for `equals`, `contains`, etc.
+      - Array for `in`, `not_in`
+      - Range tuple for `between`
+      - Omit for `exists`, `not_exists`
+    </ParamField>
+    
+    <ParamField body="param" type="string">
+      Required when `attribute` is `query_param`. Specifies which query parameter to check.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="conditionLogic" type="ConditionLogic" required>
+  How to combine multiple conditions: `AND` (all must match) or `OR` (any must match)
+</ParamField>
+
+<ParamField body="action" type="RuleAction" required>
+  Action to perform when rule matches
+  
+  <Expandable title="RedirectAction (for type: force)">
+    <ParamField body="type" type="string" required>
+      Must be `redirect`
+    </ParamField>
+    
+    <ParamField body="url" type="string" required>
+      Destination URL for redirect
+    </ParamField>
+  </Expandable>
+  
+  <Expandable title="PercentageRedirectAction (for type: percentage)">
+    <ParamField body="type" type="string" required>
+      Must be `percentage_redirect`
+    </ParamField>
+    
+    <ParamField body="url" type="string" required>
+      Destination URL for redirected percentage
+    </ParamField>
+    
+    <ParamField body="percentage" type="number" required>
+      Percentage of traffic to redirect (0-100)
+    </ParamField>
+  </Expandable>
+  
+  <Expandable title="ABTestAction (for type: ab_experiment)">
+    <ParamField body="type" type="string" required>
+      Must be `ab_test`
+    </ParamField>
+    
+    <ParamField body="variants" type="ABTestVariant[]" required>
+      Array of test variants. Percentages must sum to 100.
+      
+      <ParamField body="name" type="string" required>
+        Variant name
+      </ParamField>
+      
+      <ParamField body="percentage" type="number" required>
+        Traffic percentage for this variant (0-100)
+      </ParamField>
+      
+      <ParamField body="url" type="string" required>
+        Destination URL for variant
+      </ParamField>
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="startDate" type="string">
+  ISO 8601 date when rule becomes active
+</ParamField>
+
+<ParamField body="endDate" type="string">
+  ISO 8601 date when rule expires
+</ParamField>
+
+<ParamField body="metadata" type="Record<string, string | number | boolean>">
+  Optional metadata key-value pairs
+</ParamField>
+
+## Response
+
+<ResponseField name="message" type="string">
+  Success message
+</ResponseField>
+
+<ResponseField name="rule" type="Rule">
+  The created rule object
+  
+  <Expandable title="Rule properties">
+    <ResponseField name="id" type="number">
+      Rule ID
+    </ResponseField>
+    
+    <ResponseField name="redirectId" type="number">
+      Parent redirect ID
+    </ResponseField>
+    
+    <ResponseField name="name" type="string">
+      Rule name
+    </ResponseField>
+    
+    <ResponseField name="description" type="string">
+      Rule description
+    </ResponseField>
+    
+    <ResponseField name="type" type="RuleType">
+      Rule type
+    </ResponseField>
+    
+    <ResponseField name="priority" type="number">
+      Evaluation priority (lower = higher priority)
+    </ResponseField>
+    
+    <ResponseField name="status" type="RuleStatus">
+      Current status: `active`, `inactive`, or `draft`
+    </ResponseField>
+    
+    <ResponseField name="conditions" type="RuleCondition[]">
+      Array of conditions
+    </ResponseField>
+    
+    <ResponseField name="conditionLogic" type="ConditionLogic">
+      Condition combination logic
+    </ResponseField>
+    
+    <ResponseField name="action" type="RuleAction">
+      Rule action
+    </ResponseField>
+    
+    <ResponseField name="startDate" type="string">
+      Start date (ISO 8601)
+    </ResponseField>
+    
+    <ResponseField name="endDate" type="string">
+      End date (ISO 8601)
+    </ResponseField>
+    
+    <ResponseField name="hitCount" type="number">
+      Number of times rule has matched
+    </ResponseField>
+    
+    <ResponseField name="createdBy" type="string">
+      User who created the rule
+    </ResponseField>
+    
+    <ResponseField name="metadata" type="Record<string, string | number | boolean>">
+      Custom metadata
+    </ResponseField>
+    
+    <ResponseField name="createdAt" type="string">
+      Creation timestamp (ISO 8601)
+    </ResponseField>
+    
+    <ResponseField name="updatedAt" type="string">
+      Last update timestamp (ISO 8601)
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Examples
+
+<CodeGroup>
+
+```typescript Force redirect for mobile users
+import { createRule } from '@quickleap/sdk';
+
+const response = await createRule('redirect_123', {
+  name: 'Mobile users to app',
+  description: 'Redirect mobile traffic to mobile app',
+  type: 'force',
+  conditions: [
+    {
+      attribute: 'device_type',
+      operator: 'equals',
+      value: 'mobile'
+    }
+  ],
+  conditionLogic: 'AND',
+  action: {
+    type: 'redirect',
+    url: 'https://app.example.com'
+  }
+});
+
+console.log(response.data.rule);
+```
+
+```typescript Percentage rollout
+import { createRule } from '@quickleap/sdk';
+
+const response = await createRule('redirect_123', {
+  name: 'Beta feature rollout',
+  description: '25% of US traffic to beta site',
+  type: 'percentage',
+  conditions: [
+    {
+      attribute: 'country',
+      operator: 'equals',
+      value: 'US'
+    }
+  ],
+  conditionLogic: 'AND',
+  action: {
+    type: 'percentage_redirect',
+    url: 'https://beta.example.com',
+    percentage: 25
+  }
+});
+
+console.log(response.data.rule);
+```
+
+```typescript A/B experiment
+import { createRule } from '@quickleap/sdk';
+
+const response = await createRule('redirect_123', {
+  name: 'Landing page A/B test',
+  description: 'Test two landing page variants',
+  type: 'ab_experiment',
+  conditions: [
+    {
+      attribute: 'referrer_domain',
+      operator: 'equals',
+      value: 'google.com'
+    }
+  ],
+  conditionLogic: 'AND',
+  action: {
+    type: 'ab_test',
+    variants: [
+      {
+        name: 'Control',
+        percentage: 50,
+        url: 'https://example.com/landing-a'
+      },
+      {
+        name: 'Variant B',
+        percentage: 50,
+        url: 'https://example.com/landing-b'
+      }
+    ]
+  },
+  startDate: '2026-03-01T00:00:00Z',
+  endDate: '2026-03-31T23:59:59Z'
+});
+
+console.log(response.data.rule);
+```
+
+```typescript Multiple conditions with OR logic
+import { createRule } from '@quickleap/sdk';
+
+const response = await createRule('redirect_123', {
+  name: 'EU countries redirect',
+  description: 'Redirect EU traffic to GDPR-compliant site',
+  type: 'force',
+  conditions: [
+    {
+      attribute: 'country',
+      operator: 'in',
+      value: ['DE', 'FR', 'IT', 'ES', 'NL']
+    },
+    {
+      attribute: 'language',
+      operator: 'in',
+      value: ['de', 'fr', 'it', 'es', 'nl']
+    }
+  ],
+  conditionLogic: 'OR',
+  action: {
+    type: 'redirect',
+    url: 'https://eu.example.com'
+  }
+});
+
+console.log(response.data.rule);
+```
+
+```typescript Query parameter condition
+import { createRule } from '@quickleap/sdk';
+
+const response = await createRule('redirect_123', {
+  name: 'Campaign redirect',
+  description: 'Redirect campaign traffic',
+  type: 'force',
+  conditions: [
+    {
+      attribute: 'query_param',
+      operator: 'equals',
+      value: 'spring2026',
+      param: 'campaign'
+    }
+  ],
+  conditionLogic: 'AND',
+  action: {
+    type: 'redirect',
+    url: 'https://example.com/spring-sale'
+  }
+});
+
+console.log(response.data.rule);
+```
+
+</CodeGroup>
+
+<Note>
+  New rules are created with status `draft` by default. Use the [toggle status endpoint](/api/rules/update#toggle-status) to activate them.
+</Note>

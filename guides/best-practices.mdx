@@ -1,0 +1,207 @@
+---
+title: Best practices
+description: Optimize your redirect strategy and get the most out of Quickleap
+---
+
+Follow these best practices to ensure optimal performance, maintainability, and user experience with your domain redirects.
+
+## Redirect strategy recommendations
+
+### Choose the right redirect type
+
+Quickleap supports two redirect types, each serving different purposes:
+
+<CardGroup cols={2}>
+  <Card title="Permanent (301)" icon="arrow-right">
+    Use for domain migrations, rebranding, or permanent URL structure changes. Search engines will transfer SEO value to the new URL.
+  </Card>
+  <Card title="Temporary (302)" icon="shuffle">
+    Use for A/B testing, seasonal campaigns, or maintenance pages. Search engines will not transfer SEO value.
+  </Card>
+</CardGroup>
+
+<Warning>
+Be careful when changing from temporary to permanent redirects. Once search engines index a 301 redirect, they may cache it for extended periods.
+</Warning>
+
+### Enable path and query forwarding strategically
+
+Path forwarding and query parameter forwarding provide flexibility in how URLs are redirected:
+
+- **Path forwarding**: Enable when migrating entire sites or maintaining URL structure. Appends the original path to the destination URL.
+- **Query forwarding**: Enable when tracking campaign parameters or preserving filters and search queries.
+
+<Tip>
+For marketing campaigns, enable query forwarding to preserve UTM parameters and track campaign performance accurately.
+</Tip>
+
+## Rule prioritization
+
+Rules are evaluated in priority order, with lower numbers having higher priority. The first matching rule determines the redirect destination.
+
+### Organize rules effectively
+
+1. **Place specific rules first**: Geographic or device-specific rules should come before broad catch-all rules
+2. **Group related rules**: Keep A/B test variants and campaign rules together for easier management
+3. **Use descriptive names**: Name rules clearly to indicate their purpose (e.g., "Mobile Users - Product Page" or "US Traffic - Promo Landing")
+
+<Note>
+Use the reorder functionality to adjust rule priorities without recreating them. Rule priority is automatically updated when you reorder.
+</Note>
+
+### Leverage rule conditions strategically
+
+**AND logic**: Use when all conditions must be true (e.g., mobile devices AND US visitors)
+
+**OR logic**: Use when any condition can trigger the rule (e.g., Chrome OR Firefox browsers)
+
+<Accordion title="Example: Multi-condition rule for mobile users in specific countries">
+```json
+{
+  "name": "Mobile Users - APAC Region",
+  "conditionLogic": "AND",
+  "conditions": [
+    {
+      "attribute": "device_type",
+      "operator": "equals",
+      "value": "mobile"
+    },
+    {
+      "attribute": "country",
+      "operator": "in",
+      "value": ["SG", "JP", "AU", "IN"]
+    }
+  ]
+}
+```
+This rule only triggers when visitors are on mobile devices AND located in Singapore, Japan, Australia, or India.
+</Accordion>
+
+## Analytics optimization
+
+### Configure sampling rates appropriately
+
+The sampling rate controls what percentage of traffic is tracked for analytics (0 to 1, where 1 = 100%).
+
+- **High-traffic redirects**: Use lower sampling rates (0.1-0.3) to reduce data volume while maintaining statistical significance
+- **Low-traffic redirects**: Use 1.0 to capture all visits and get accurate insights
+- **A/B tests**: Use 1.0 during tests to ensure accurate conversion tracking
+
+<Info>
+Sampling affects only analytics collection, not redirect functionality. All visitors are redirected regardless of sampling rate.
+</Info>
+
+### Monitor rule performance
+
+Regularly review rule analytics to identify:
+
+- **Unused rules**: Rules with zero hits may be misconfigured or no longer needed
+- **High-performing rules**: Rules with many hits indicate successful targeting
+- **Overlapping rules**: Multiple rules with similar hit counts may indicate redundancy
+
+### Use time-based filtering
+
+When analyzing analytics, use the date range filters to:
+
+- Compare campaign performance before and after changes
+- Identify traffic patterns by hour or day of week
+- Measure seasonal trends in geographic distribution
+
+## Performance tips
+
+### Minimize rule complexity
+
+While Quickleap supports complex rule conditions, simpler rules perform better:
+
+- Limit conditions to what's necessary for accurate targeting
+- Avoid regex operators when exact match or contains operators suffice
+- Use predefined values when available instead of custom inputs
+
+### Regular maintenance
+
+<CardGroup cols={2}>
+  <Card title="Archive expired rules" icon="archive">
+    Set end dates on temporary campaigns and mark rules as inactive when they're no longer needed.
+  </Card>
+  <Card title="Consolidate redirects" icon="compress">
+    Combine similar redirects when possible to reduce management overhead.
+  </Card>
+  <Card title="Review analytics monthly" icon="chart-line">
+    Check for trends, optimize underperforming redirects, and identify opportunities.
+  </Card>
+  <Card title="Test before deploying" icon="flask">
+    Use the rule testing endpoint to verify conditions match expected traffic before activating rules.
+  </Card>
+</CardGroup>
+
+## SEO considerations
+
+### Permanent redirects and SEO value
+
+When using permanent (301) redirects:
+
+- Search engines transfer most SEO value (PageRank, backlinks) to the destination URL
+- The transfer takes time (weeks to months depending on crawl frequency)
+- Once indexed, 301 redirects are difficult to reverse in search results
+
+### Avoid redirect chains
+
+Direct users to the final destination in a single hop:
+
+<Warning>
+**Don't do this**: oldsite.com → intermediate.com → newsite.com
+
+**Do this**: oldsite.com → newsite.com
+
+Redirect chains slow down page load times and may cause search engines to stop following after 3-5 hops.
+</Warning>
+
+### Preserve URL structure when possible
+
+Enable path forwarding during migrations to maintain URL structure:
+
+- `oldsite.com/products/item` → `newsite.com/products/item`
+- Helps users who bookmarked specific pages
+- Preserves SEO value for individual pages, not just the domain
+
+### Monitor crawl errors
+
+After setting up redirects:
+
+1. Submit your new sitemap to Google Search Console
+2. Monitor for 404 errors and adjust redirects accordingly
+3. Check that important pages are being crawled and indexed at the new destination
+
+<Tip>
+Use the geographic analytics to identify which regions drive the most traffic, then optimize your content and hosting for those locations.
+</Tip>
+
+## Security best practices
+
+### HTTPS support
+
+Quickleap provides full HTTPS support for all redirects:
+
+- Always use HTTPS destination URLs when possible
+- Mixed content (HTTPS → HTTP) may trigger browser warnings
+- SSL certificates are automatically provisioned for custom domains
+
+### Validate destination URLs
+
+Before activating redirects:
+
+- Verify destination URLs are accessible and return 200 status codes
+- Check for SSL certificate issues on destination domains
+- Test with different user agents to ensure consistent behavior
+
+### Use domain verification
+
+Always verify domain ownership using the verification endpoint before going live:
+
+- Prevents unauthorized redirects from domains you don't control
+- Ensures DNS is configured correctly
+- Confirms HTTPS certificates are properly provisioned
+
+<Note>
+Domain verification typically requires adding a DNS TXT record or uploading a verification file to your domain.
+</Note>

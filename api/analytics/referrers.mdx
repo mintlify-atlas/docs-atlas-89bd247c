@@ -1,0 +1,331 @@
+---
+title: Get referrer data
+description: Track where your redirect traffic originates from
+---
+
+The referrer data endpoint provides insights into the sources of your redirect traffic, showing which websites, social media platforms, search engines, or campaigns are driving visitors to your redirects.
+
+## Endpoint
+
+```
+GET /analytics/redirect/:redirectId/stats/referrers
+```
+
+## Function signature
+
+```typescript
+getReferrerData(
+  redirectId: string,
+  params?: { start?: string; end?: string; limit?: number }
+): Promise<AxiosResponse>
+```
+
+## Path parameters
+
+<ParamField path="redirectId" type="string" required>
+  The unique identifier of the redirect to retrieve referrer data for
+</ParamField>
+
+## Query parameters
+
+<ParamField query="start" type="string">
+  Start date for the analytics period in ISO 8601 format
+  
+  Example: `2024-01-01T00:00:00Z`
+</ParamField>
+
+<ParamField query="end" type="string">
+  End date for the analytics period in ISO 8601 format
+  
+  Example: `2024-01-31T23:59:59Z`
+</ParamField>
+
+<ParamField query="limit" type="number">
+  Maximum number of referrers to return. Results are ordered by hit count descending.
+  
+  Default: `100`
+  
+  Maximum: `1000`
+</ParamField>
+
+<Note>
+  Referrer data is collected from the HTTP Referer header. Some browsers and privacy tools may block or modify this header, resulting in "direct" or "unknown" traffic.
+</Note>
+
+## Response
+
+The endpoint returns a list of referrers ordered by traffic volume:
+
+<ResponseField name="data" type="object">
+  <Expandable title="properties">
+    <ResponseField name="referrers" type="array">
+      Array of referrer sources with their statistics
+      
+      <Expandable title="item properties">
+        <ResponseField name="url" type="string">
+          Full referrer URL or special value (`direct`, `unknown`, `search`, `social`)
+        </ResponseField>
+
+        <ResponseField name="domain" type="string">
+          Referrer domain (e.g., `google.com`, `twitter.com`)
+        </ResponseField>
+
+        <ResponseField name="type" type="string">
+          Referrer category: `search`, `social`, `direct`, `email`, `paid`, `website`, or `unknown`
+        </ResponseField>
+
+        <ResponseField name="hits" type="number">
+          Total number of hits from this referrer
+        </ResponseField>
+
+        <ResponseField name="uniqueVisitors" type="number">
+          Number of unique visitors from this referrer
+        </ResponseField>
+
+        <ResponseField name="percentage" type="number">
+          Percentage of total traffic from this referrer
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+
+    <ResponseField name="summary" type="object">
+      <Expandable title="properties">
+        <ResponseField name="totalReferrers" type="number">
+          Total number of unique referrers
+        </ResponseField>
+
+        <ResponseField name="directTraffic" type="number">
+          Percentage of direct traffic (no referrer)
+        </ResponseField>
+
+        <ResponseField name="searchTraffic" type="number">
+          Percentage of traffic from search engines
+        </ResponseField>
+
+        <ResponseField name="socialTraffic" type="number">
+          Percentage of traffic from social media
+        </ResponseField>
+
+        <ResponseField name="topReferrer" type="object">
+          <Expandable title="properties">
+            <ResponseField name="domain" type="string">
+              Domain of the top referrer
+            </ResponseField>
+
+            <ResponseField name="hits" type="number">
+              Hit count from the top referrer
+            </ResponseField>
+          </Expandable>
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="meta" type="object">
+  <Expandable title="properties">
+    <ResponseField name="redirectId" type="string">
+      The redirect ID for which data was retrieved
+    </ResponseField>
+
+    <ResponseField name="limit" type="number">
+      The limit applied to the results
+    </ResponseField>
+
+    <ResponseField name="period" type="object">
+      <Expandable title="properties">
+        <ResponseField name="start" type="string">
+          Start of the analyzed period
+        </ResponseField>
+
+        <ResponseField name="end" type="string">
+          End of the analyzed period
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example request
+
+<CodeGroup>
+
+```typescript TypeScript
+import { getReferrerData } from '@quickleap/api';
+
+const response = await getReferrerData('redirect_abc123', {
+  start: '2024-01-01T00:00:00Z',
+  end: '2024-01-31T23:59:59Z',
+  limit: 50
+});
+
+const { referrers, summary } = response.data.data;
+
+console.log(`Total referrers: ${summary.totalReferrers}`);
+console.log(`Direct traffic: ${summary.directTraffic}%`);
+console.log(`Search traffic: ${summary.searchTraffic}%`);
+console.log(`Social traffic: ${summary.socialTraffic}%`);
+
+// Display top 10 referrers
+console.log('\nTop 10 Referrers:');
+referrers.slice(0, 10).forEach((ref, index) => {
+  console.log(`${index + 1}. ${ref.domain} - ${ref.hits} hits (${ref.percentage}%)`);
+});
+```
+
+```javascript JavaScript
+const { getReferrerData } = require('@quickleap/api');
+
+getReferrerData('redirect_abc123', {
+  start: '2024-01-01T00:00:00Z',
+  end: '2024-01-31T23:59:59Z',
+  limit: 20
+}).then(response => {
+  const data = response.data.data;
+  
+  // Filter social media referrers
+  const socialReferrers = data.referrers.filter(r => r.type === 'social');
+  console.log('Social media sources:', socialReferrers);
+});
+```
+
+```bash cURL
+curl -X GET \
+  'https://api.quickleap.com/analytics/redirect/redirect_abc123/stats/referrers?start=2024-01-01T00:00:00Z&end=2024-01-31T23:59:59Z&limit=50' \
+  -H 'Authorization: Bearer YOUR_API_KEY' \
+  -H 'Content-Type: application/json'
+```
+
+```python Python
+import requests
+import pandas as pd
+
+response = requests.get(
+  'https://api.quickleap.com/analytics/redirect/redirect_abc123/stats/referrers',
+  params={
+    'start': '2024-01-01T00:00:00Z',
+    'end': '2024-01-31T23:59:59Z',
+    'limit': 100
+  },
+  headers={'Authorization': 'Bearer YOUR_API_KEY'}
+)
+
+data = response.json()['data']
+df = pd.DataFrame(data['referrers'])
+
+# Group by referrer type
+type_summary = df.groupby('type')['hits'].sum()
+print('Traffic by referrer type:')
+print(type_summary)
+
+# Top 10 referrers
+print('\nTop 10 referrers:')
+print(df.nlargest(10, 'hits')[['domain', 'hits', 'percentage']])
+```
+
+</CodeGroup>
+
+## Example response
+
+```json
+{
+  "data": {
+    "referrers": [
+      {
+        "url": "direct",
+        "domain": "direct",
+        "type": "direct",
+        "hits": 15678,
+        "uniqueVisitors": 8234,
+        "percentage": 34.3
+      },
+      {
+        "url": "https://www.google.com/search",
+        "domain": "google.com",
+        "type": "search",
+        "hits": 12456,
+        "uniqueVisitors": 6789,
+        "percentage": 27.3
+      },
+      {
+        "url": "https://twitter.com",
+        "domain": "twitter.com",
+        "type": "social",
+        "hits": 8932,
+        "uniqueVisitors": 4567,
+        "percentage": 19.5
+      },
+      {
+        "url": "https://www.linkedin.com",
+        "domain": "linkedin.com",
+        "type": "social",
+        "hits": 4234,
+        "uniqueVisitors": 2345,
+        "percentage": 9.3
+      },
+      {
+        "url": "https://example.com/blog",
+        "domain": "example.com",
+        "type": "website",
+        "hits": 2876,
+        "uniqueVisitors": 1456,
+        "percentage": 6.3
+      }
+    ],
+    "summary": {
+      "totalReferrers": 287,
+      "directTraffic": 34.3,
+      "searchTraffic": 32.8,
+      "socialTraffic": 24.5,
+      "topReferrer": {
+        "domain": "direct",
+        "hits": 15678
+      }
+    }
+  },
+  "meta": {
+    "redirectId": "redirect_abc123",
+    "limit": 50,
+    "period": {
+      "start": "2024-01-01T00:00:00Z",
+      "end": "2024-01-31T23:59:59Z"
+    }
+  }
+}
+```
+
+## Use cases
+
+- **Attribution tracking**: Understand which marketing channels drive the most traffic
+- **Content strategy**: Identify which content pieces or partners send the most visitors
+- **SEO analysis**: Monitor search engine referral traffic and identify opportunities
+- **Social media ROI**: Measure the impact of social media campaigns
+- **Partner tracking**: Track traffic from partner websites and affiliates
+- **Campaign analysis**: Combine with UTM parameters for detailed campaign attribution
+
+## Best practices
+
+- **Handle direct traffic**: High direct traffic may indicate mobile apps, bookmarks, or privacy-conscious users
+- **Group similar referrers**: Combine subdomains (e.g., `m.facebook.com` and `www.facebook.com`) for clearer insights
+- **Monitor changes**: Track referrer distribution over time to spot new traffic sources or lost partnerships
+- **UTM parameters**: Use campaign analytics endpoint for more granular tracking of marketing campaigns
+- **Privacy considerations**: Be aware that referrer blocking is increasingly common for privacy reasons
+
+## Referrer types
+
+The API automatically categorizes referrers into the following types:
+
+- **search**: Traffic from search engines (Google, Bing, DuckDuckGo, etc.)
+- **social**: Traffic from social media platforms (Twitter, Facebook, LinkedIn, etc.)
+- **direct**: No referrer information (typed URL, bookmark, mobile app, etc.)
+- **email**: Traffic from email clients (when detectable)
+- **paid**: Traffic from known advertising platforms
+- **website**: Traffic from other websites
+- **unknown**: Unable to categorize
+
+## Related endpoints
+
+- [Get campaign analytics](/api/analytics/overview) - Detailed UTM parameter tracking
+- [Get basic statistics](/api/analytics/basic-stats) - Overall traffic metrics
+- [Get raw hit data](/api/analytics/overview) - Individual hits with referrer information
+- [Get destination URL analytics](/api/analytics/overview) - Track where users are redirected to

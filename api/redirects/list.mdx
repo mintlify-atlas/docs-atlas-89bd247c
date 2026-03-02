@@ -1,0 +1,127 @@
+---
+title: List redirects
+description: Retrieve all redirects for the authenticated user
+---
+
+## Endpoint
+
+```
+GET /get-redirects/me
+```
+
+## Function signature
+
+```typescript
+export const getUserRedirects = async (): Promise<AxiosResponse>
+```
+
+## Parameters
+
+This endpoint does not require any parameters. It automatically fetches redirects for the authenticated user.
+
+## Response
+
+<ResponseField name="status" type="number">
+  HTTP status code
+</ResponseField>
+
+<ResponseField name="data" type="array">
+  Array of redirect objects
+  
+  <Expandable title="Redirect object properties">
+    <ResponseField name="id" type="string">
+      Unique identifier for the redirect
+    </ResponseField>
+    
+    <ResponseField name="fromDomain" type="string">
+      The source domain
+    </ResponseField>
+    
+    <ResponseField name="toDomain" type="string">
+      The destination domain
+    </ResponseField>
+    
+    <ResponseField name="redirectType" type="string">
+      Either `permanent` or `temporary`
+    </ResponseField>
+    
+    <ResponseField name="pathForwarding" type="boolean">
+      Whether path forwarding is enabled
+    </ResponseField>
+    
+    <ResponseField name="queryForwarding" type="boolean">
+      Whether query parameter forwarding is enabled
+    </ResponseField>
+    
+    <ResponseField name="samplingRate" type="number">
+      Analytics sampling rate (0 to 1)
+    </ResponseField>
+    
+    <ResponseField name="createdAt" type="string">
+      Timestamp when the redirect was created
+    </ResponseField>
+    
+    <ResponseField name="updatedAt" type="string">
+      Timestamp when the redirect was last updated
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Code example
+
+<CodeGroup>
+
+```typescript Example
+import { getUserRedirects } from '@/lib/api';
+
+const fetchRedirects = async () => {
+  const response = await getUserRedirects();
+  const redirects = response.data;
+  
+  console.log(`Total redirects: ${redirects.length}`);
+  return redirects;
+};
+```
+
+```typescript With error handling
+import { getUserRedirects } from '@/lib/api';
+
+const fetchRedirects = async () => {
+  try {
+    const response = await getUserRedirects();
+    return response.data;
+  } catch (error) {
+    console.error('Failed to fetch redirects:', error);
+    throw error;
+  }
+};
+```
+
+```typescript Filter permanent redirects
+import { getUserRedirects } from '@/lib/api';
+import { RedirectType } from '@/lib/constants';
+
+const getPermanentRedirects = async () => {
+  const response = await getUserRedirects();
+  const permanentRedirects = response.data.filter(
+    redirect => redirect.redirectType === RedirectType.Permanent
+  );
+  return permanentRedirects;
+};
+```
+
+</CodeGroup>
+
+<Note>
+  This endpoint requires authentication. Ensure the user is logged in before making this request.
+</Note>
+
+## Error responses
+
+<Expandable title="401 - Unauthorized">
+  Returned when the user is not authenticated
+</Expandable>
+
+<Expandable title="500 - Internal Server Error">
+  Returned when an unexpected error occurs on the server
+</Expandable>

@@ -1,0 +1,238 @@
+---
+title: List rules
+description: Retrieve all rules for a redirect
+---
+
+## Endpoint
+
+```
+GET /rules/redirect/:redirectId
+```
+
+Retrieves all rules associated with a specific redirect, ordered by priority (ascending).
+
+## Path parameters
+
+<ParamField path="redirectId" type="string" required>
+  The ID of the redirect
+</ParamField>
+
+## Response
+
+<ResponseField name="rules" type="Rule[]">
+  Array of rule objects sorted by priority
+  
+  <Expandable title="Rule properties">
+    <ResponseField name="id" type="number">
+      Rule ID
+    </ResponseField>
+    
+    <ResponseField name="redirectId" type="number">
+      Parent redirect ID
+    </ResponseField>
+    
+    <ResponseField name="name" type="string">
+      Rule name
+    </ResponseField>
+    
+    <ResponseField name="description" type="string">
+      Rule description
+    </ResponseField>
+    
+    <ResponseField name="type" type="RuleType">
+      Rule type: `force`, `percentage`, or `ab_experiment`
+    </ResponseField>
+    
+    <ResponseField name="priority" type="number">
+      Evaluation priority (lower numbers evaluated first)
+    </ResponseField>
+    
+    <ResponseField name="status" type="RuleStatus">
+      Current status: `active`, `inactive`, or `draft`
+    </ResponseField>
+    
+    <ResponseField name="conditions" type="RuleCondition[]">
+      Array of conditions that must be met
+      
+      <Expandable title="RuleCondition properties">
+        <ResponseField name="attribute" type="AttributeKey">
+          User attribute to evaluate
+        </ResponseField>
+        
+        <ResponseField name="operator" type="OperatorKey">
+          Comparison operator
+        </ResponseField>
+        
+        <ResponseField name="value" type="string | number | string[] | number[] | [number, number]">
+          Value to compare against
+        </ResponseField>
+        
+        <ResponseField name="param" type="string">
+          Query parameter name (when attribute is `query_param`)
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    
+    <ResponseField name="conditionLogic" type="ConditionLogic">
+      How conditions are combined: `AND` or `OR`
+    </ResponseField>
+    
+    <ResponseField name="action" type="RuleAction">
+      Action to perform when rule matches
+      
+      <Expandable title="Action types">
+        **RedirectAction** (type: force)
+        - `type`: "redirect"
+        - `url`: Destination URL
+        
+        **PercentageRedirectAction** (type: percentage)
+        - `type`: "percentage_redirect"
+        - `url`: Destination URL
+        - `percentage`: Traffic percentage (0-100)
+        
+        **ABTestAction** (type: ab_experiment)
+        - `type`: "ab_test"
+        - `variants`: Array of variants with `name`, `percentage`, and `url`
+      </Expandable>
+    </ResponseField>
+    
+    <ResponseField name="startDate" type="string">
+      Optional start date (ISO 8601)
+    </ResponseField>
+    
+    <ResponseField name="endDate" type="string">
+      Optional end date (ISO 8601)
+    </ResponseField>
+    
+    <ResponseField name="hitCount" type="number">
+      Number of times this rule has matched
+    </ResponseField>
+    
+    <ResponseField name="createdBy" type="string">
+      User who created the rule
+    </ResponseField>
+    
+    <ResponseField name="metadata" type="Record<string, string | number | boolean>">
+      Custom metadata key-value pairs
+    </ResponseField>
+    
+    <ResponseField name="createdAt" type="string">
+      Creation timestamp (ISO 8601)
+    </ResponseField>
+    
+    <ResponseField name="updatedAt" type="string">
+      Last update timestamp (ISO 8601)
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Examples
+
+<CodeGroup>
+
+```typescript Get all rules
+import { getRulesForRedirect } from '@quickleap/sdk';
+
+const response = await getRulesForRedirect('redirect_123');
+const rules = response.data.rules;
+
+console.log(`Found ${rules.length} rules`);
+rules.forEach(rule => {
+  console.log(`${rule.priority}: ${rule.name} (${rule.status})`);
+});
+```
+
+```typescript Filter active rules
+import { getRulesForRedirect } from '@quickleap/sdk';
+
+const response = await getRulesForRedirect('redirect_123');
+const activeRules = response.data.rules.filter(
+  rule => rule.status === 'active'
+);
+
+console.log(`Active rules: ${activeRules.length}`);
+```
+
+```typescript Get rules by type
+import { getRulesForRedirect } from '@quickleap/sdk';
+
+const response = await getRulesForRedirect('redirect_123');
+const abTests = response.data.rules.filter(
+  rule => rule.type === 'ab_experiment'
+);
+
+abTests.forEach(test => {
+  console.log(`A/B Test: ${test.name}`);
+  if (test.action.type === 'ab_test') {
+    test.action.variants.forEach(variant => {
+      console.log(`  - ${variant.name}: ${variant.percentage}%`);
+    });
+  }
+});
+```
+
+```typescript Check rule performance
+import { getRulesForRedirect } from '@quickleap/sdk';
+
+const response = await getRulesForRedirect('redirect_123');
+const totalHits = response.data.rules.reduce(
+  (sum, rule) => sum + rule.hitCount,
+  0
+);
+
+console.log(`Total rule hits: ${totalHits}`);
+
+response.data.rules
+  .sort((a, b) => b.hitCount - a.hitCount)
+  .slice(0, 5)
+  .forEach(rule => {
+    const percentage = totalHits > 0 
+      ? ((rule.hitCount / totalHits) * 100).toFixed(1)
+      : 0;
+    console.log(`${rule.name}: ${rule.hitCount} (${percentage}%)`);
+  });
+```
+
+</CodeGroup>
+
+## Get rule by ID
+
+To retrieve a single rule by its ID:
+
+```
+GET /rules/:ruleId
+```
+
+### Path parameters
+
+<ParamField path="ruleId" type="string" required>
+  The ID of the rule
+</ParamField>
+
+### Response
+
+<ResponseField name="rule" type="Rule">
+  The rule object (same structure as above)
+</ResponseField>
+
+### Example
+
+<CodeGroup>
+
+```typescript Get single rule
+import { getRuleById } from '@quickleap/sdk';
+
+const response = await getRuleById('rule_456');
+const rule = response.data.rule;
+
+console.log(`Rule: ${rule.name}`);
+console.log(`Status: ${rule.status}`);
+console.log(`Priority: ${rule.priority}`);
+console.log(`Hit count: ${rule.hitCount}`);
+```
+
+</CodeGroup>
+
+<Note>
+  Rules are always returned sorted by priority in ascending order. The first rule in the array has the highest priority and will be evaluated first.
+</Note>

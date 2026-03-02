@@ -1,0 +1,206 @@
+---
+title: Domain redirect management
+description: Create and manage domain redirects with advanced configuration options for path forwarding, query parameters, and traffic sampling
+---
+
+Quickleap's domain redirect management system allows you to create and configure redirects from one domain to another with precise control over how traffic is handled.
+
+## Redirect types
+
+Quickleap supports two types of HTTP redirects, each serving different use cases:
+
+<CardGroup cols={2}>
+  <Card title="Permanent redirects" icon="link">
+    **HTTP 301** - Indicates that the resource has permanently moved to a new location. Search engines will update their indexes to the new URL.
+  </Card>
+  <Card title="Temporary redirects" icon="clock">
+    **HTTP 302** - Indicates that the resource is temporarily available at a different location. Search engines maintain the original URL in their indexes.
+  </Card>
+</CardGroup>
+
+<Info>
+Permanent redirects are ideal for domain migrations, rebranding, or consolidating multiple domains. Temporary redirects work well for maintenance pages, A/B testing, or seasonal campaigns.
+</Info>
+
+## Creating a redirect
+
+To create a new redirect:
+
+1. Navigate to your dashboard and click **Create redirect**
+2. Enter your **From Domain** (domain-only format required)
+3. Enter your **To Domain** (destination URL)
+4. Choose your redirect type (permanent or temporary)
+5. Configure optional forwarding settings
+6. Set your analytics sampling rate
+7. Click **Create** to activate the redirect
+
+<Warning>
+The From Domain must be in domain-only format without paths or query parameters. For example, use `example.com` instead of `example.com/path`.
+</Warning>
+
+## Configuration options
+
+### Path forwarding
+
+Path forwarding automatically appends the path from the source URL to the destination URL.
+
+<Tabs>
+  <Tab title="Enabled">
+    When a user visits `olddomain.com/products/item`, they are redirected to `newdomain.com/products/item`
+    
+    <Note>
+    When path forwarding is enabled, your To Domain should not include a path since the original path will be automatically appended.
+    </Note>
+  </Tab>
+  <Tab title="Disabled">
+    When a user visits `olddomain.com/products/item`, they are redirected to exactly `newdomain.com` (or whatever destination you specified)
+  </Tab>
+</Tabs>
+
+**Configuration:**
+- Toggle "Do you want to forward the path?" when creating or editing a redirect
+- Default: Disabled
+- Compatible with query forwarding
+
+### Query forwarding
+
+Query forwarding preserves URL query parameters from the source URL and appends them to the destination URL.
+
+<Tabs>
+  <Tab title="Enabled">
+    When a user visits `olddomain.com?utm_source=email&ref=campaign`, they are redirected to `newdomain.com?utm_source=email&ref=campaign`
+    
+    <Note>
+    When query forwarding is enabled, your To Domain should not include query parameters since the original parameters will be automatically appended.
+    </Note>
+  </Tab>
+  <Tab title="Disabled">
+    When a user visits `olddomain.com?utm_source=email`, query parameters are stripped and they are redirected to exactly your specified destination
+  </Tab>
+</Tabs>
+
+**Configuration:**
+- Toggle "Do you want to forward the query?" when creating or editing a redirect
+- Default: Disabled
+- Ideal for preserving UTM parameters and tracking codes
+
+### Sampling rate
+
+The sampling rate controls what percentage of redirect traffic is tracked for analytics purposes.
+
+<Accordion title="How sampling rate works">
+  The sampling rate is a value between 0% and 100% that determines how much traffic data is collected:
+  
+  - **100%**: Track every single redirect (maximum analytics detail)
+  - **50%**: Track half of all redirects (reduces analytics volume by 50%)
+  - **10%**: Track 10% of redirects (minimal tracking for high-volume redirects)
+  - **0%**: No tracking (redirects still work, but no analytics are collected)
+  
+  Sampling applies randomly across all traffic, ensuring statistically representative data even at lower percentages.
+</Accordion>
+
+**Use cases:**
+- Set to **100%** for new redirects to gather complete data
+- Reduce to **10-25%** for high-traffic redirects to optimize performance
+- Set to **0%** to disable analytics entirely for privacy-sensitive redirects
+
+<Info>
+Adjusting the sampling rate does not affect redirect functionality - it only controls analytics data collection.
+</Info>
+
+## Managing redirects
+
+### Updating a redirect
+
+You can modify redirect configuration at any time:
+
+1. Locate the redirect in your dashboard
+2. Click the edit icon or select the redirect
+3. Update the To Domain, redirect type, or forwarding settings
+4. Adjust the sampling rate if needed
+5. Click **Update** to save changes
+
+<Note>
+The From Domain cannot be changed after creation. To redirect from a different domain, create a new redirect.
+</Note>
+
+### Deleting a redirect
+
+Deleting a redirect is permanent and immediate:
+
+1. Find the redirect you want to remove
+2. Click the delete icon
+3. Confirm the deletion
+
+<Warning>
+Once deleted, the redirect stops working immediately. Any traffic to the From Domain will no longer be redirected.
+</Warning>
+
+## Best practices
+
+<CardGroup cols={2}>
+  <Card title="Use permanent redirects for migrations" icon="arrows-turn-right">
+    When moving content permanently, use 301 redirects to maintain SEO rankings and update search engine indexes.
+  </Card>
+  <Card title="Enable path forwarding for site moves" icon="folder">
+    When migrating an entire site, enable path forwarding to ensure all pages redirect to their corresponding new locations.
+  </Card>
+  <Card title="Preserve query parameters" icon="tag">
+    Enable query forwarding to maintain UTM tracking codes and campaign parameters through redirects.
+  </Card>
+  <Card title="Start with 100% sampling" icon="chart-line">
+    Begin with full analytics tracking, then reduce sampling rate once you understand traffic patterns.
+  </Card>
+</CardGroup>
+
+## Example configurations
+
+<Accordion title="Simple domain redirect">
+  **Scenario:** Redirect all traffic from `oldsite.com` to `newsite.com`
+  
+  - From Domain: `https://oldsite.com`
+  - To Domain: `https://newsite.com`
+  - Redirect Type: Permanent
+  - Path Forwarding: Disabled
+  - Query Forwarding: Disabled
+  - Sampling Rate: 100%
+</Accordion>
+
+<Accordion title="Full site migration">
+  **Scenario:** Move entire site structure from old domain to new domain
+  
+  - From Domain: `https://oldsite.com`
+  - To Domain: `https://newsite.com`
+  - Redirect Type: Permanent
+  - Path Forwarding: **Enabled**
+  - Query Forwarding: **Enabled**
+  - Sampling Rate: 100%
+  
+  This preserves the complete URL structure including paths and query parameters.
+</Accordion>
+
+<Accordion title="Campaign redirect with tracking">
+  **Scenario:** Redirect marketing domain to landing page while preserving UTM codes
+  
+  - From Domain: `https://promo.example.com`
+  - To Domain: `https://example.com/campaign`
+  - Redirect Type: Temporary
+  - Path Forwarding: Disabled
+  - Query Forwarding: **Enabled**
+  - Sampling Rate: 100%
+  
+  Query forwarding ensures UTM parameters are preserved for campaign tracking.
+</Accordion>
+
+<Accordion title="High-volume redirect">
+  **Scenario:** Redirect high-traffic domain with optimized analytics
+  
+  - From Domain: `https://popular.com`
+  - To Domain: `https://newpopular.com`
+  - Redirect Type: Permanent
+  - Path Forwarding: Enabled
+  - Query Forwarding: Enabled
+  - Sampling Rate: **25%**
+  
+  Reduced sampling rate maintains representative analytics while optimizing performance for high traffic volumes.
+</Accordion>

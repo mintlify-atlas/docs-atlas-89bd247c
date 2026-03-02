@@ -1,0 +1,202 @@
+---
+title: Get basic statistics
+description: Retrieve core analytics metrics for a redirect
+---
+
+The basic statistics endpoint provides essential metrics about your redirect's performance, including total hits, unique visitors, bot detection, and high-level summary data.
+
+## Endpoint
+
+```
+GET /analytics/redirect/:redirectId/stats/basic
+```
+
+## Function signature
+
+```typescript
+getBasicStats(
+  redirectId: string,
+  params?: { start?: string; end?: string }
+): Promise<AxiosResponse>
+```
+
+## Path parameters
+
+<ParamField path="redirectId" type="string" required>
+  The unique identifier of the redirect to retrieve statistics for
+</ParamField>
+
+## Query parameters
+
+<ParamField query="start" type="string">
+  Start date for the analytics period in ISO 8601 format
+  
+  Example: `2024-01-01T00:00:00Z`
+</ParamField>
+
+<ParamField query="end" type="string">
+  End date for the analytics period in ISO 8601 format
+  
+  Example: `2024-01-31T23:59:59Z`
+</ParamField>
+
+<Note>
+  If no date range is specified, the endpoint returns statistics for the last 30 days by default.
+</Note>
+
+## Response
+
+The endpoint returns an object containing basic statistics:
+
+<ResponseField name="data" type="object">
+  <Expandable title="properties">
+    <ResponseField name="totalHits" type="number">
+      Total number of hits during the specified period
+    </ResponseField>
+
+    <ResponseField name="uniqueVisitors" type="number">
+      Number of unique visitors (based on IP and user agent fingerprinting)
+    </ResponseField>
+
+    <ResponseField name="botHits" type="number">
+      Number of hits identified as coming from bots
+    </ResponseField>
+
+    <ResponseField name="humanHits" type="number">
+      Number of hits from human visitors
+    </ResponseField>
+
+    <ResponseField name="avgHitsPerDay" type="number">
+      Average number of hits per day during the period
+    </ResponseField>
+
+    <ResponseField name="peakHits" type="number">
+      Maximum number of hits in a single day
+    </ResponseField>
+
+    <ResponseField name="peakDate" type="string">
+      Date when peak hits occurred (ISO 8601 format)
+    </ResponseField>
+
+    <ResponseField name="successRate" type="number">
+      Percentage of successful redirects (2xx/3xx status codes)
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="meta" type="object">
+  <Expandable title="properties">
+    <ResponseField name="redirectId" type="string">
+      The redirect ID for which statistics were retrieved
+    </ResponseField>
+
+    <ResponseField name="period" type="object">
+      <Expandable title="properties">
+        <ResponseField name="start" type="string">
+          Start of the analyzed period
+        </ResponseField>
+
+        <ResponseField name="end" type="string">
+          End of the analyzed period
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example request
+
+<CodeGroup>
+
+```typescript TypeScript
+import { getBasicStats } from '@quickleap/api';
+
+const response = await getBasicStats('redirect_abc123', {
+  start: '2024-01-01T00:00:00Z',
+  end: '2024-01-31T23:59:59Z'
+});
+
+console.log('Total hits:', response.data.data.totalHits);
+console.log('Unique visitors:', response.data.data.uniqueVisitors);
+console.log('Success rate:', response.data.data.successRate + '%');
+```
+
+```javascript JavaScript
+const { getBasicStats } = require('@quickleap/api');
+
+getBasicStats('redirect_abc123', {
+  start: '2024-01-01T00:00:00Z',
+  end: '2024-01-31T23:59:59Z'
+}).then(response => {
+  const stats = response.data.data;
+  console.log('Total hits:', stats.totalHits);
+  console.log('Unique visitors:', stats.uniqueVisitors);
+});
+```
+
+```bash cURL
+curl -X GET \
+  'https://api.quickleap.com/analytics/redirect/redirect_abc123/stats/basic?start=2024-01-01T00:00:00Z&end=2024-01-31T23:59:59Z' \
+  -H 'Authorization: Bearer YOUR_API_KEY' \
+  -H 'Content-Type: application/json'
+```
+
+```python Python
+import requests
+
+response = requests.get(
+  'https://api.quickleap.com/analytics/redirect/redirect_abc123/stats/basic',
+  params={
+    'start': '2024-01-01T00:00:00Z',
+    'end': '2024-01-31T23:59:59Z'
+  },
+  headers={
+    'Authorization': 'Bearer YOUR_API_KEY',
+    'Content-Type': 'application/json'
+  }
+)
+
+stats = response.json()['data']
+print(f"Total hits: {stats['totalHits']}")
+print(f"Unique visitors: {stats['uniqueVisitors']}")
+```
+
+</CodeGroup>
+
+## Example response
+
+```json
+{
+  "data": {
+    "totalHits": 45678,
+    "uniqueVisitors": 12453,
+    "botHits": 3421,
+    "humanHits": 42257,
+    "avgHitsPerDay": 1473.5,
+    "peakHits": 3892,
+    "peakDate": "2024-01-15T00:00:00Z",
+    "successRate": 98.7
+  },
+  "meta": {
+    "redirectId": "redirect_abc123",
+    "period": {
+      "start": "2024-01-01T00:00:00Z",
+      "end": "2024-01-31T23:59:59Z"
+    }
+  }
+}
+```
+
+## Use cases
+
+- **Dashboard overview**: Display high-level metrics on your redirect dashboard
+- **Performance monitoring**: Track overall redirect health and success rates
+- **Capacity planning**: Use average and peak metrics to plan infrastructure
+- **Bot detection**: Monitor the ratio of bot to human traffic
+- **Trend analysis**: Compare statistics across different time periods
+
+## Related endpoints
+
+- [Get hits over time](/api/analytics/time-series) - Detailed time-based breakdown
+- [Get dashboard summary](/api/analytics/overview) - Comprehensive dashboard data
+- [Get bot analytics](/api/analytics/overview) - Detailed bot vs human analysis

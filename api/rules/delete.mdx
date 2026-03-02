@@ -1,0 +1,133 @@
+---
+title: Delete a rule
+description: Remove a rule from a redirect
+---
+
+## Endpoint
+
+```
+DELETE /rules/:ruleId
+```
+
+Permanently deletes a rule. This operation cannot be undone.
+
+## Path parameters
+
+<ParamField path="ruleId" type="string" required>
+  The ID of the rule to delete
+</ParamField>
+
+## Response
+
+Returns a success response when the rule is deleted.
+
+<ResponseField name="message" type="string">
+  Confirmation message
+</ResponseField>
+
+## Examples
+
+<CodeGroup>
+
+```typescript Delete a rule
+import { deleteRule } from '@quickleap/sdk';
+
+try {
+  await deleteRule('rule_456');
+  console.log('Rule deleted successfully');
+} catch (error) {
+  console.error('Failed to delete rule:', error);
+}
+```
+
+```typescript Delete with confirmation
+import { getRuleById, deleteRule } from '@quickleap/sdk';
+
+// Get rule details first
+const ruleResponse = await getRuleById('rule_456');
+const rule = ruleResponse.data.rule;
+
+console.log(`About to delete: ${rule.name}`);
+console.log(`Hit count: ${rule.hitCount}`);
+console.log(`Status: ${rule.status}`);
+
+// Confirm deletion
+const confirmed = confirm('Are you sure?');
+if (confirmed) {
+  await deleteRule('rule_456');
+  console.log('Rule deleted');
+}
+```
+
+```typescript Delete inactive rules
+import { getRulesForRedirect, deleteRule } from '@quickleap/sdk';
+
+const response = await getRulesForRedirect('redirect_123');
+const inactiveRules = response.data.rules.filter(
+  rule => rule.status === 'inactive'
+);
+
+console.log(`Found ${inactiveRules.length} inactive rules`);
+
+for (const rule of inactiveRules) {
+  await deleteRule(rule.id.toString());
+  console.log(`Deleted: ${rule.name}`);
+}
+
+console.log('Cleanup complete');
+```
+
+```typescript Bulk delete with error handling
+import { deleteRule } from '@quickleap/sdk';
+
+const ruleIds = ['rule_123', 'rule_456', 'rule_789'];
+const results = {
+  deleted: [] as string[],
+  failed: [] as { id: string; error: string }[]
+};
+
+for (const ruleId of ruleIds) {
+  try {
+    await deleteRule(ruleId);
+    results.deleted.push(ruleId);
+    console.log(`✓ Deleted ${ruleId}`);
+  } catch (error) {
+    results.failed.push({
+      id: ruleId,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+    console.error(`✗ Failed to delete ${ruleId}`);
+  }
+}
+
+console.log(`\nDeleted: ${results.deleted.length}`);
+console.log(`Failed: ${results.failed.length}`);
+```
+
+</CodeGroup>
+
+<Note>
+  Deleting a rule is permanent and cannot be undone. Consider setting the rule status to `inactive` instead if you may want to re-enable it later.
+</Note>
+
+## Alternative: Deactivate instead of delete
+
+If you want to preserve the rule but stop it from evaluating, consider using the toggle status endpoint:
+
+```typescript Deactivate instead of delete
+import { toggleRuleStatus } from '@quickleap/sdk';
+
+// Set rule to inactive instead of deleting
+const response = await toggleRuleStatus('rule_456', {
+  status: 'inactive'
+});
+
+console.log(`Rule ${response.data.rule.name} is now inactive`);
+console.log(`Hit count preserved: ${response.data.rule.hitCount}`);
+```
+
+Benefits of deactivating:
+- Preserves rule configuration and analytics
+- Can be reactivated later
+- Maintains historical hit count data
+- Allows for seasonal or temporary rules

@@ -1,0 +1,289 @@
+---
+title: Get geographic data
+description: Analyze the geographic distribution of your redirect traffic
+---
+
+The geographic data endpoint provides insights into where your redirect traffic originates, with the ability to group results by country, region, or city.
+
+## Endpoint
+
+```
+GET /analytics/redirect/:redirectId/stats/geo
+```
+
+## Function signature
+
+```typescript
+getGeographicData(
+  redirectId: string,
+  params?: { start?: string; end?: string; groupBy?: string }
+): Promise<AxiosResponse>
+```
+
+## Path parameters
+
+<ParamField path="redirectId" type="string" required>
+  The unique identifier of the redirect to retrieve geographic data for
+</ParamField>
+
+## Query parameters
+
+<ParamField query="start" type="string">
+  Start date for the analytics period in ISO 8601 format
+  
+  Example: `2024-01-01T00:00:00Z`
+</ParamField>
+
+<ParamField query="end" type="string">
+  End date for the analytics period in ISO 8601 format
+  
+  Example: `2024-01-31T23:59:59Z`
+</ParamField>
+
+<ParamField query="groupBy" type="string">
+  Geographic dimension to group results by
+  
+  Available values:
+  - `country` - Group by country (default)
+  - `region` - Group by region/state
+  - `city` - Group by city
+</ParamField>
+
+<Note>
+  Geographic data is determined using IP geolocation. Accuracy varies by location, with city-level data being less precise than country-level.
+</Note>
+
+## Response
+
+The endpoint returns an array of geographic locations with hit counts:
+
+<ResponseField name="data" type="object">
+  <Expandable title="properties">
+    <ResponseField name="locations" type="array">
+      Array of geographic locations with their respective statistics
+      
+      <Expandable title="item properties">
+        <ResponseField name="code" type="string">
+          ISO country code (when groupBy is `country`) or region/city identifier
+        </ResponseField>
+
+        <ResponseField name="name" type="string">
+          Human-readable location name
+        </ResponseField>
+
+        <ResponseField name="hits" type="number">
+          Total number of hits from this location
+        </ResponseField>
+
+        <ResponseField name="uniqueVisitors" type="number">
+          Number of unique visitors from this location
+        </ResponseField>
+
+        <ResponseField name="percentage" type="number">
+          Percentage of total traffic from this location
+        </ResponseField>
+
+        <ResponseField name="coordinates" type="object" optional>
+          Geographic coordinates (when available)
+          
+          <Expandable title="properties">
+            <ResponseField name="latitude" type="number">
+              Latitude coordinate
+            </ResponseField>
+
+            <ResponseField name="longitude" type="number">
+              Longitude coordinate
+            </ResponseField>
+          </Expandable>
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+
+    <ResponseField name="summary" type="object">
+      <Expandable title="properties">
+        <ResponseField name="totalLocations" type="number">
+          Total number of distinct locations
+        </ResponseField>
+
+        <ResponseField name="topLocation" type="string">
+          Name of the location with the most hits
+        </ResponseField>
+
+        <ResponseField name="coverage" type="number">
+          Percentage of hits with known geographic data
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="meta" type="object">
+  <Expandable title="properties">
+    <ResponseField name="redirectId" type="string">
+      The redirect ID for which data was retrieved
+    </ResponseField>
+
+    <ResponseField name="groupBy" type="string">
+      The grouping dimension used
+    </ResponseField>
+
+    <ResponseField name="period" type="object">
+      <Expandable title="properties">
+        <ResponseField name="start" type="string">
+          Start of the analyzed period
+        </ResponseField>
+
+        <ResponseField name="end" type="string">
+          End of the analyzed period
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Example request
+
+<CodeGroup>
+
+```typescript TypeScript
+import { getGeographicData } from '@quickleap/api';
+
+// Get country-level geographic data
+const response = await getGeographicData('redirect_abc123', {
+  start: '2024-01-01T00:00:00Z',
+  end: '2024-01-31T23:59:59Z',
+  groupBy: 'country'
+});
+
+const { locations, summary } = response.data.data;
+
+console.log(`Traffic from ${summary.totalLocations} countries`);
+console.log(`Top country: ${summary.topLocation}`);
+
+// Display top 5 countries
+locations.slice(0, 5).forEach(location => {
+  console.log(`${location.name}: ${location.hits} hits (${location.percentage}%)`);
+});
+```
+
+```javascript JavaScript
+const { getGeographicData } = require('@quickleap/api');
+
+getGeographicData('redirect_abc123', {
+  start: '2024-01-01T00:00:00Z',
+  end: '2024-01-31T23:59:59Z',
+  groupBy: 'city'
+}).then(response => {
+  const cities = response.data.data.locations;
+  console.log('Top cities:', cities.slice(0, 10));
+});
+```
+
+```bash cURL
+curl -X GET \
+  'https://api.quickleap.com/analytics/redirect/redirect_abc123/stats/geo?start=2024-01-01T00:00:00Z&end=2024-01-31T23:59:59Z&groupBy=country' \
+  -H 'Authorization: Bearer YOUR_API_KEY' \
+  -H 'Content-Type: application/json'
+```
+
+```python Python
+import requests
+import pandas as pd
+
+response = requests.get(
+  'https://api.quickleap.com/analytics/redirect/redirect_abc123/stats/geo',
+  params={
+    'start': '2024-01-01T00:00:00Z',
+    'end': '2024-01-31T23:59:59Z',
+    'groupBy': 'country'
+  },
+  headers={'Authorization': 'Bearer YOUR_API_KEY'}
+)
+
+data = response.json()['data']
+df = pd.DataFrame(data['locations'])
+
+# Display top 10 countries by traffic
+print(df.nlargest(10, 'hits')[['name', 'hits', 'percentage']])
+```
+
+</CodeGroup>
+
+## Example response
+
+```json
+{
+  "data": {
+    "locations": [
+      {
+        "code": "US",
+        "name": "United States",
+        "hits": 18542,
+        "uniqueVisitors": 5234,
+        "percentage": 40.6,
+        "coordinates": {
+          "latitude": 37.0902,
+          "longitude": -95.7129
+        }
+      },
+      {
+        "code": "GB",
+        "name": "United Kingdom",
+        "hits": 8932,
+        "uniqueVisitors": 2876,
+        "percentage": 19.5,
+        "coordinates": {
+          "latitude": 51.5074,
+          "longitude": -0.1278
+        }
+      },
+      {
+        "code": "DE",
+        "name": "Germany",
+        "hits": 6234,
+        "uniqueVisitors": 1987,
+        "percentage": 13.6,
+        "coordinates": {
+          "latitude": 51.1657,
+          "longitude": 10.4515
+        }
+      }
+    ],
+    "summary": {
+      "totalLocations": 87,
+      "topLocation": "United States",
+      "coverage": 98.3
+    }
+  },
+  "meta": {
+    "redirectId": "redirect_abc123",
+    "groupBy": "country",
+    "period": {
+      "start": "2024-01-01T00:00:00Z",
+      "end": "2024-01-31T23:59:59Z"
+    }
+  }
+}
+```
+
+## Use cases
+
+- **Geographic visualization**: Create interactive maps showing traffic distribution
+- **Localization**: Identify which regions need localized content or redirects
+- **CDN optimization**: Determine optimal CDN edge locations for your traffic
+- **Compliance**: Ensure geographic data handling complies with regional regulations
+- **Market analysis**: Understand which geographic markets drive the most traffic
+- **Fraud detection**: Identify unusual geographic patterns that may indicate abuse
+
+## Best practices
+
+- **Start with countries**: Begin analysis at the country level before drilling down to regions or cities
+- **Handle unknowns**: Some traffic may not have geographic data (VPNs, privacy tools). Check the `coverage` field
+- **Combine with other metrics**: Cross-reference geographic data with device, browser, or referrer analytics
+- **Coordinate visualization**: Use the provided coordinates to plot locations on maps
+
+## Related endpoints
+
+- [Get language data](/api/analytics/overview) - Understand visitor language preferences
+- [Get basic statistics](/api/analytics/basic-stats) - Overall traffic metrics
+- [Get raw hit data](/api/analytics/overview) - Filter individual hits by country

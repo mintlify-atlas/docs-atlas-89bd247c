@@ -1,0 +1,158 @@
+---
+title: Update a redirect
+description: Update an existing redirect's configuration
+---
+
+## Endpoint
+
+```
+PUT /update/{id}
+```
+
+## Function signature
+
+```typescript
+export const updateRedirect = async (data: UpdateRedirectProps): Promise<AxiosResponse>
+```
+
+## Request body
+
+<ParamField path="id" type="string" required>
+  The ID of the redirect to be updated
+</ParamField>
+
+<ParamField path="toDomain" type="string" required>
+  The new domain to which the redirect points
+</ParamField>
+
+<ParamField path="redirectType" type="RedirectType" required>
+  The type of redirect. Must be either `permanent` or `temporary`
+</ParamField>
+
+<ParamField path="pathForwarding" type="boolean" required>
+  Indicates whether the path should be forwarded
+</ParamField>
+
+<ParamField path="queryForwarding" type="boolean" required>
+  Indicates whether the query parameters should be forwarded
+</ParamField>
+
+<ParamField path="samplingRate" type="number" required>
+  The sampling rate for analytics. Must be a value between 0 and 1
+</ParamField>
+
+## Type definitions
+
+```typescript
+type UpdateRedirectProps = {
+  id: string;
+  toDomain: string;
+  redirectType: RedirectType;
+  pathForwarding: boolean;
+  queryForwarding: boolean;
+  samplingRate: number;
+};
+
+enum RedirectType {
+  Permanent = 'permanent',
+  Temporary = 'temporary',
+}
+```
+
+<Note>
+  The `fromDomain` cannot be updated. To change the source domain, you must delete the redirect and create a new one.
+</Note>
+
+## Response
+
+<ResponseField name="status" type="number">
+  HTTP status code
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  The updated redirect object
+</ResponseField>
+
+## Code example
+
+<CodeGroup>
+
+```typescript Example
+import { updateRedirect } from '@/lib/api';
+import { RedirectType } from '@/lib/constants';
+
+const updateExistingRedirect = async (redirectId: string) => {
+  const response = await updateRedirect({
+    id: redirectId,
+    toDomain: 'updated-domain.com',
+    redirectType: RedirectType.Permanent,
+    pathForwarding: true,
+    queryForwarding: true,
+    samplingRate: 1.0
+  });
+  
+  return response.data;
+};
+```
+
+```typescript Change redirect type
+import { updateRedirect } from '@/lib/api';
+import { RedirectType } from '@/lib/constants';
+
+// Change from temporary to permanent redirect
+const makeRedirectPermanent = async (redirectId: string, currentToDomain: string) => {
+  const response = await updateRedirect({
+    id: redirectId,
+    toDomain: currentToDomain,
+    redirectType: RedirectType.Permanent,
+    pathForwarding: true,
+    queryForwarding: true,
+    samplingRate: 1.0
+  });
+  
+  return response.data;
+};
+```
+
+```typescript Adjust sampling rate
+import { updateRedirect } from '@/lib/api';
+import { RedirectType } from '@/lib/constants';
+
+// Reduce analytics sampling to 25%
+const reduceSampling = async (redirect: any) => {
+  const response = await updateRedirect({
+    id: redirect.id,
+    toDomain: redirect.toDomain,
+    redirectType: redirect.redirectType,
+    pathForwarding: redirect.pathForwarding,
+    queryForwarding: redirect.queryForwarding,
+    samplingRate: 0.25
+  });
+  
+  return response.data;
+};
+```
+
+</CodeGroup>
+
+## Error responses
+
+<Expandable title="400 - Bad Request">
+  Returned when the request body is invalid or missing required fields
+</Expandable>
+
+<Expandable title="401 - Unauthorized">
+  Returned when the user is not authenticated
+</Expandable>
+
+<Expandable title="403 - Forbidden">
+  Returned when the user does not have permission to update this redirect
+</Expandable>
+
+<Expandable title="404 - Not Found">
+  Returned when the redirect with the specified ID does not exist
+</Expandable>
+
+<Expandable title="500 - Internal Server Error">
+  Returned when an unexpected error occurs on the server
+</Expandable>
