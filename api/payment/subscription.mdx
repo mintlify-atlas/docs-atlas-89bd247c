@@ -1,0 +1,347 @@
+---
+title: Subscription management
+description: Manage user subscriptions including viewing, canceling, and reactivating
+---
+
+# Subscription management
+
+Manage user subscriptions including viewing current subscription details, canceling, and reactivating subscriptions.
+
+## Get current subscription
+
+Retrieve the authenticated user's current subscription details.
+
+```typescript
+getCurrentSubscription(): Promise<GetSubscriptionResponse>
+```
+
+**Route:** `GET /payment/subscription`
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Whether the request was successful
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <Expandable title="properties">
+    <ResponseField name="subscription" type="SubscriptionData | null">
+      The subscription object, or null if no active subscription
+      
+      <Expandable title="subscription properties">
+        <ResponseField name="id" type="string">
+          Unique subscription identifier
+        </ResponseField>
+        
+        <ResponseField name="status" type="string">
+          Subscription status: `active`, `trialing`, `canceled`, `revoked`, `past_due`, `incomplete`, `incomplete_expired`
+        </ResponseField>
+        
+        <ResponseField name="plan" type="Plan">
+          The subscribed plan details including name, pricing, limits, and features
+        </ResponseField>
+        
+        <ResponseField name="currentPeriodStart" type="string | null">
+          ISO 8601 timestamp when current billing period started
+        </ResponseField>
+        
+        <ResponseField name="currentPeriodEnd" type="string | null">
+          ISO 8601 timestamp when current billing period ends
+        </ResponseField>
+        
+        <ResponseField name="cancelAtPeriodEnd" type="boolean">
+          Whether subscription will cancel at the end of current period
+        </ResponseField>
+        
+        <ResponseField name="canceledAt" type="string | null">
+          ISO 8601 timestamp when subscription was canceled
+        </ResponseField>
+        
+        <ResponseField name="trialStart" type="string | null">
+          ISO 8601 timestamp when trial period started
+        </ResponseField>
+        
+        <ResponseField name="trialEnd" type="string | null">
+          ISO 8601 timestamp when trial period ends
+        </ResponseField>
+        
+        <ResponseField name="isActive" type="boolean">
+          Whether the subscription is currently active
+        </ResponseField>
+        
+        <ResponseField name="isTrialing" type="boolean">
+          Whether the subscription is in trial period
+        </ResponseField>
+        
+        <ResponseField name="daysUntilRenewal" type="number | null">
+          Number of days until next renewal
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Human-readable status message
+</ResponseField>
+
+### Example
+
+<CodeGroup>
+
+```typescript TypeScript
+import { getCurrentSubscription } from '@/lib/api/payment';
+
+const response = await getCurrentSubscription();
+
+if (response.success && response.data.subscription) {
+  const sub = response.data.subscription;
+  console.log(`Plan: ${sub.plan.name}`);
+  console.log(`Status: ${sub.status}`);
+  console.log(`Renewal: ${sub.daysUntilRenewal} days`);
+}
+```
+
+```javascript JavaScript
+const response = await getCurrentSubscription();
+
+if (response.success && response.data.subscription) {
+  console.log('Subscription:', response.data.subscription);
+}
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    'https://api.quickleap.io/payment/subscription',
+    headers={'Authorization': f'Bearer {token}'}
+)
+
+data = response.json()
+if data['success'] and data['data']['subscription']:
+    sub = data['data']['subscription']
+    print(f"Plan: {sub['plan']['name']}")
+    print(f"Status: {sub['status']}")
+```
+
+</CodeGroup>
+
+## Cancel subscription
+
+Cancel an active subscription. You can choose to cancel immediately or at the end of the billing period.
+
+```typescript
+cancelSubscription(params?: CancelSubscriptionParams): Promise<CancelSubscriptionResponse>
+```
+
+**Route:** `POST /payment/subscription/cancel`
+
+### Parameters
+
+<ParamField path="immediately" type="boolean">
+  If true, cancel and revoke access immediately. If false or omitted, cancel at period end.
+</ParamField>
+
+<ParamField path="reason" type="string">
+  Optional reason for cancellation (for feedback)
+</ParamField>
+
+### Request body
+
+```typescript
+interface CancelSubscriptionParams {
+  immediately?: boolean;
+  reason?: string;
+}
+```
+
+### Example
+
+<CodeGroup>
+
+```typescript Cancel at period end
+import { cancelSubscription } from '@/lib/api/payment';
+
+const response = await cancelSubscription({
+  immediately: false,
+  reason: 'Switching to different service'
+});
+
+if (response.success) {
+  console.log('Subscription will cancel at period end');
+}
+```
+
+```typescript Cancel immediately
+const response = await cancelSubscription({
+  immediately: true,
+  reason: 'No longer need the service'
+});
+
+if (response.success) {
+  console.log('Subscription canceled immediately');
+}
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'https://api.quickleap.io/payment/subscription/cancel',
+    headers={'Authorization': f'Bearer {token}'},
+    json={'immediately': False, 'reason': 'No longer needed'}
+)
+
+data = response.json()
+print(data['message'])
+```
+
+</CodeGroup>
+
+<Warning>
+Immediate cancellation revokes access immediately and cannot be undone. Use "cancel at period end" to maintain access until the paid period expires.
+</Warning>
+
+## Reactivate subscription
+
+Reactivate a subscription that was set to cancel at period end.
+
+```typescript
+reactivateSubscription(): Promise<ReactivateSubscriptionResponse>
+```
+
+**Route:** `POST /payment/subscription/reactivate`
+
+### Example
+
+<CodeGroup>
+
+```typescript TypeScript
+import { reactivateSubscription } from '@/lib/api/payment';
+
+const response = await reactivateSubscription();
+
+if (response.success) {
+  console.log('Subscription reactivated successfully');
+}
+```
+
+```javascript JavaScript
+const response = await reactivateSubscription();
+console.log(response.message);
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'https://api.quickleap.io/payment/subscription/reactivate',
+    headers={'Authorization': f'Bearer {token}'}
+)
+
+data = response.json()
+print(data['message'])
+```
+
+</CodeGroup>
+
+<Note>
+Reactivation only works for subscriptions set to cancel at period end. Immediately canceled subscriptions cannot be reactivated.
+</Note>
+
+## Create customer portal session
+
+Generate a secure link to the Stripe Customer Portal where users can manage their billing information, payment methods, and invoices.
+
+```typescript
+createPortalSession(params?: CreatePortalParams): Promise<PortalResponse>
+```
+
+**Route:** `POST /payment/portal`
+
+### Parameters
+
+<ParamField path="returnUrl" type="string">
+  Optional URL to redirect user after they're done in the portal. Defaults to your dashboard.
+</ParamField>
+
+### Example
+
+<CodeGroup>
+
+```typescript TypeScript
+import { createPortalSession } from '@/lib/api/payment';
+
+const response = await createPortalSession({
+  returnUrl: 'https://yourapp.com/billing'
+});
+
+if (response.success) {
+  // Redirect to customer portal
+  window.location.href = response.data.portalUrl;
+}
+```
+
+```javascript JavaScript
+const response = await createPortalSession();
+
+if (response.success) {
+  window.location.href = response.data.portalUrl;
+}
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'https://api.quickleap.io/payment/portal',
+    headers={'Authorization': f'Bearer {token}'},
+    json={'returnUrl': 'https://yourapp.com/billing'}
+)
+
+data = response.json()
+if data['success']:
+    portal_url = data['data']['portalUrl']
+```
+
+</CodeGroup>
+
+### Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "portalUrl": "https://billing.stripe.com/p/session/...",
+    "expiresAt": "2024-12-31T23:59:59Z"
+  },
+  "message": "Portal session created successfully"
+}
+```
+
+<Info>
+Customer portal sessions are time-limited and expire after the user completes their session or after the expiration time.
+</Info>
+
+## Subscription statuses
+
+- **active** - Subscription is active and in good standing
+- **trialing** - In trial period, not yet charged
+- **canceled** - Canceled but still active until period end
+- **revoked** - Immediately canceled, access revoked
+- **past_due** - Payment failed, in grace period
+- **incomplete** - Initial payment incomplete
+- **incomplete_expired** - Initial payment expired without completion
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Create checkout" icon="cart-shopping" href="/api/payment/checkout">
+    Start a new subscription
+  </Card>
+  
+  <Card title="Payment history" icon="receipt" href="/api/payment/history">
+    View transaction history
+  </Card>
+</CardGroup>

@@ -286,14 +286,14 @@ Quickleap supports two HTTP redirect types:
 Path forwarding preserves the URL path structure:
 
 **Enabled:**
-```
+```text
 old-domain.com/blog/post-1 → new-domain.com/blog/post-1
 old-domain.com/about       → new-domain.com/about
 old-domain.com/            → new-domain.com/
 ```
 
 **Disabled:**
-```
+```text
 old-domain.com/blog/post-1 → new-domain.com
 old-domain.com/about       → new-domain.com
 old-domain.com/            → new-domain.com
@@ -308,7 +308,7 @@ Enable path forwarding when migrating a site to maintain URL structure and prese
 Query forwarding preserves URL query parameters:
 
 **Enabled:**
-```
+```text
 old-domain.com?utm_source=email&utm_campaign=newsletter
   → new-domain.com?utm_source=email&utm_campaign=newsletter
 
@@ -317,7 +317,7 @@ old-domain.com/page?ref=twitter
 ```
 
 **Disabled:**
-```
+```text
 old-domain.com?utm_source=email&utm_campaign=newsletter
   → new-domain.com
 

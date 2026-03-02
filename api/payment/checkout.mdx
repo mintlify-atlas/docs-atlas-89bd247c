@@ -1,0 +1,187 @@
+---
+title: Create checkout session
+description: Create a checkout session for plan subscription
+---
+
+# Create checkout session
+
+Create a secure checkout session for subscribing to a plan. This redirects the user to a payment page where they can complete their subscription.
+
+## Endpoint
+
+```typescript
+createCheckoutSession(params: CreateCheckoutParams): Promise<CheckoutResponse>
+```
+
+**Route:** `POST /payment/checkout`
+
+## Parameters
+
+<ParamField path="planId" type="string" required>
+  The ID of the plan to subscribe to
+</ParamField>
+
+## Request body
+
+```typescript
+interface CreateCheckoutParams {
+  planId: string;
+}
+```
+
+## Response
+
+<ResponseField name="success" type="boolean">
+  Whether the checkout session was created successfully
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <Expandable title="properties">
+    <ResponseField name="checkoutUrl" type="string">
+      The URL to redirect the user to for payment
+    </ResponseField>
+    
+    <ResponseField name="checkoutId" type="string">
+      Unique identifier for this checkout session
+    </ResponseField>
+    
+    <ResponseField name="expiresAt" type="string">
+      ISO 8601 timestamp when the checkout session expires
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Human-readable status message
+</ResponseField>
+
+## Example
+
+<CodeGroup>
+
+```typescript TypeScript
+import { createCheckoutSession } from '@/lib/api/payment';
+
+const response = await createCheckoutSession({
+  planId: 'plan_professional'
+});
+
+if (response.success) {
+  // Redirect user to checkout
+  window.location.href = response.data.checkoutUrl;
+}
+```
+
+```javascript JavaScript
+const response = await createCheckoutSession({
+  planId: 'plan_professional'
+});
+
+if (response.success) {
+  window.location.href = response.data.checkoutUrl;
+}
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    'https://api.quickleap.io/payment/checkout',
+    headers={'Authorization': f'Bearer {token}'},
+    json={'planId': 'plan_professional'}
+)
+
+data = response.json()
+if data['success']:
+    checkout_url = data['data']['checkoutUrl']
+```
+
+```bash cURL
+curl -X POST https://api.quickleap.io/payment/checkout \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"planId": "plan_professional"}'
+```
+
+</CodeGroup>
+
+## Response example
+
+```json
+{
+  "success": true,
+  "data": {
+    "checkoutUrl": "https://checkout.stripe.com/c/pay/cs_test_...",
+    "checkoutId": "cs_test_a1b2c3d4e5f6",
+    "expiresAt": "2024-12-31T23:59:59Z"
+  },
+  "message": "Checkout session created successfully"
+}
+```
+
+## Error responses
+
+<Accordion title="400 - Invalid plan ID">
+```json
+{
+  "success": false,
+  "message": "Invalid plan ID provided"
+}
+```
+</Accordion>
+
+<Accordion title="401 - Unauthorized">
+```json
+{
+  "success": false,
+  "message": "Authentication required"
+}
+```
+</Accordion>
+
+<Accordion title="404 - Plan not found">
+```json
+{
+  "success": false,
+  "message": "Plan not found or inactive"
+}
+```
+</Accordion>
+
+## Checkout flow
+
+1. **Create session** - Call this endpoint with the desired plan ID
+2. **Redirect user** - Redirect to the `checkoutUrl` from the response
+3. **User completes payment** - User enters payment information on the secure checkout page
+4. **Redirect back** - User is redirected back to your success URL
+5. **Webhook notification** - Your backend receives a webhook confirming the subscription
+
+<Note>
+Checkout sessions expire after 24 hours. If the user doesn't complete payment within this time, they'll need to create a new session.
+</Note>
+
+## Get checkout session
+
+Retrieve an existing checkout session by ID:
+
+```typescript
+getCheckoutSession(id: string): Promise<CheckoutResponse>
+```
+
+**Route:** `GET /payment/checkout/{id}`
+
+<Info>
+This is useful for checking the status of a checkout session or recovering from interrupted flows.
+</Info>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Manage subscription" icon="credit-card" href="/api/payment/subscription">
+    View and manage active subscriptions
+  </Card>
+  
+  <Card title="Payment history" icon="clock-rotate-left" href="/api/payment/history">
+    Access transaction history
+  </Card>
+</CardGroup>

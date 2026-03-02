@@ -1,0 +1,188 @@
+---
+title: Billing and subscriptions
+description: Manage your Quickleap subscription, billing, and payment methods
+---
+
+# Billing and subscriptions
+
+Quickleap provides flexible subscription management with transparent pricing and complete control over your billing preferences.
+
+## Subscription management
+
+### View your subscription
+
+Access your current subscription details from the dashboard:
+
+1. Navigate to **Billing** in the sidebar
+2. View your current plan, renewal date, and usage statistics
+3. See your subscription status (active, trialing, canceled, etc.)
+
+Your subscription page displays:
+- **Current plan** - Plan name, pricing, and features
+- **Billing cycle** - Current period start and end dates
+- **Next renewal** - Days until your next billing date
+- **Trial status** - If you're in a trial period, see when it ends
+- **Usage stats** - Current usage against your plan limits
+
+<Info>
+Trial periods are configured per plan. Most plans include a trial period where you can test all features before being charged.
+</Info>
+
+### Cancel your subscription
+
+You can cancel your subscription at any time:
+
+1. Go to **Billing** → **Subscription**
+2. Click **Cancel Subscription**
+3. Choose cancellation type:
+   - **Cancel at period end** - Keep access until your current billing period ends
+   - **Cancel immediately** - Cancel now and lose access immediately
+4. Optionally provide a reason for cancellation
+5. Confirm cancellation
+
+<Warning>
+Immediate cancellation will revoke access to your account immediately. Choose "Cancel at period end" to maintain access until your paid period expires.
+</Warning>
+
+### Reactivate your subscription
+
+If you canceled at period end, you can reactivate before the period expires:
+
+1. Go to **Billing** → **Subscription**
+2. Click **Reactivate Subscription**
+3. Your subscription will continue without interruption
+
+<Note>
+Reactivation is only available for subscriptions that were set to cancel at period end. You cannot reactivate immediately canceled subscriptions.
+</Note>
+
+## Payment history
+
+View all your past payments and invoices:
+
+1. Navigate to **Billing** → **Payment History**
+2. See all transactions with details:
+   - Transaction date and amount
+   - Payment status (succeeded, failed, pending, refunded)
+   - Transaction type (payment, refund, subscription cycle)
+   - Invoice and receipt links
+3. Download receipts for accounting purposes
+4. Filter by date range or status
+
+### Transaction types
+
+- **payment** - Regular subscription charges
+- **refund** - Refunded amounts
+- **subscription_cycle** - Recurring billing cycle charges
+- **setup_fee** - One-time setup charges (if applicable)
+
+### Transaction statuses
+
+- **succeeded** - Payment processed successfully
+- **failed** - Payment failed (card declined, insufficient funds, etc.)
+- **pending** - Payment is being processed
+- **refunded** - Payment was fully refunded
+- **partially_refunded** - Part of the payment was refunded
+
+## Customer portal
+
+Access the Stripe Customer Portal for advanced billing management:
+
+1. Go to **Billing**
+2. Click **Manage Billing** or **Customer Portal**
+3. You'll be redirected to Stripe's secure portal where you can:
+   - Update payment methods
+   - Update billing information
+   - View and download invoices
+   - Manage tax information
+
+<Info>
+The Customer Portal session is secure and time-limited. You'll be redirected back to Quickleap when done.
+</Info>
+
+## Plan limits and usage
+
+### Understanding limits
+
+Each plan includes specific limits:
+
+- **Max redirects** - Maximum number of redirect domains you can create
+- **Max analytics events per redirect** - Number of hits tracked per redirect
+- **Max rules per redirect** - Number of conditional rules per redirect
+- **Analytics retention** - How long analytics data is stored
+
+### Usage tracking
+
+Monitor your usage in the billing dashboard:
+
+1. **Redirects used** - Current number of active redirects
+2. **Total analytics events** - Total hits across all redirects this billing period
+3. **Last usage update** - When usage stats were last refreshed
+
+<Warning>
+If you exceed your plan limits, you may need to upgrade to a higher tier or your service may be restricted.
+</Warning>
+
+## Upgrading and downgrading
+
+### Upgrade your plan
+
+To upgrade to a higher-tier plan:
+
+1. Go to **Billing** → **Plans**
+2. Select a higher-tier plan
+3. Review the pricing and features
+4. Click **Upgrade**
+5. Complete the checkout process
+
+<Note>
+Upgrades are prorated. You'll only pay the difference for the remaining billing period.
+</Note>
+
+### Downgrade your plan
+
+To downgrade to a lower-tier plan:
+
+1. Go to **Billing** → **Plans**
+2. Select a lower-tier plan
+3. Review the new limits and features
+4. Click **Change Plan**
+5. Confirm the downgrade
+
+<Warning>
+Downgrades take effect at the end of your current billing period. If your current usage exceeds the new plan's limits, you'll need to reduce your usage before the downgrade takes effect.
+</Warning>
+
+## Grace period
+
+Quickleap provides a grace period for payment failures:
+
+- If your payment fails, you'll receive an email notification
+- You have a grace period (configured per plan) to update your payment method
+- During the grace period, your service continues without interruption
+- After the grace period expires, your subscription may be suspended
+
+<Info>
+Grace periods are typically 3-7 days depending on your plan tier. Check your plan details for the exact grace period.
+</Info>
+
+## Billing support
+
+Need help with billing?
+
+- Check our [pricing page](/resources/pricing) for plan details
+- Review our [FAQ](/resources/faq) for common billing questions
+- Contact support at [admin@lazyweb.rocks](mailto:admin@lazyweb.rocks)
+- Visit the [support center](/resources/support) for additional help
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="View pricing" icon="dollar-sign" href="/resources/pricing">
+    Compare all available plans
+  </Card>
+  
+  <Card title="API integration" icon="code" href="/api/overview">
+    Integrate billing with your app
+  </Card>
+</CardGroup>

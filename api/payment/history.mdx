@@ -1,0 +1,384 @@
+---
+title: Payment history and billing
+description: Access payment transaction history and billing summaries
+---
+
+# Payment history and billing
+
+Retrieve payment transaction history and billing summaries for the authenticated user.
+
+## Get payment history
+
+Retrieve a paginated list of payment transactions.
+
+```typescript
+getPaymentHistory(params?: PaymentHistoryParams): Promise<PaymentHistoryResponse>
+```
+
+**Route:** `GET /payment/history`
+
+### Parameters
+
+<ParamField query="page" type="number" default="1">
+  Page number for pagination
+</ParamField>
+
+<ParamField query="limit" type="number" default="10">
+  Number of transactions per page (max 100)
+</ParamField>
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Whether the request was successful
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <Expandable title="properties">
+    <ResponseField name="transactions" type="Transaction[]">
+      Array of transaction objects
+      
+      <Expandable title="transaction properties">
+        <ResponseField name="id" type="string">
+          Unique transaction identifier
+        </ResponseField>
+        
+        <ResponseField name="type" type="string">
+          Transaction type: `payment`, `refund`, `subscription_cycle`, `setup_fee`
+        </ResponseField>
+        
+        <ResponseField name="status" type="string">
+          Payment status: `succeeded`, `failed`, `pending`, `refunded`, `partially_refunded`
+        </ResponseField>
+        
+        <ResponseField name="amount" type="number">
+          Transaction amount in smallest currency unit (cents)
+        </ResponseField>
+        
+        <ResponseField name="currency" type="string">
+          Three-letter ISO currency code (e.g., "usd", "eur")
+        </ResponseField>
+        
+        <ResponseField name="provider" type="string">
+          Payment provider (e.g., "stripe")
+        </ResponseField>
+        
+        <ResponseField name="providerTransactionId" type="string">
+          Transaction ID from the payment provider
+        </ResponseField>
+        
+        <ResponseField name="taxAmount" type="number">
+          Tax amount in smallest currency unit
+        </ResponseField>
+        
+        <ResponseField name="feeAmount" type="number">
+          Processing fee amount
+        </ResponseField>
+        
+        <ResponseField name="refundedAmount" type="number">
+          Amount refunded (if applicable)
+        </ResponseField>
+        
+        <ResponseField name="paidAt" type="string | null">
+          ISO 8601 timestamp when payment succeeded
+        </ResponseField>
+        
+        <ResponseField name="refundedAt" type="string | null">
+          ISO 8601 timestamp when refund was processed
+        </ResponseField>
+        
+        <ResponseField name="failedAt" type="string | null">
+          ISO 8601 timestamp when payment failed
+        </ResponseField>
+        
+        <ResponseField name="receiptUrl" type="string">
+          URL to download receipt
+        </ResponseField>
+        
+        <ResponseField name="invoiceUrl" type="string">
+          URL to download invoice
+        </ResponseField>
+        
+        <ResponseField name="plan" type="Plan">
+          Associated plan details
+        </ResponseField>
+        
+        <ResponseField name="createdAt" type="string">
+          ISO 8601 timestamp when transaction was created
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    
+    <ResponseField name="pagination" type="object">
+      <Expandable title="properties">
+        <ResponseField name="total" type="number">
+          Total number of transactions
+        </ResponseField>
+        
+        <ResponseField name="page" type="number">
+          Current page number
+        </ResponseField>
+        
+        <ResponseField name="limit" type="number">
+          Transactions per page
+        </ResponseField>
+        
+        <ResponseField name="totalPages" type="number">
+          Total number of pages
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Example
+
+<CodeGroup>
+
+```typescript TypeScript
+import { getPaymentHistory } from '@/lib/api/payment';
+
+const response = await getPaymentHistory({
+  page: 1,
+  limit: 20
+});
+
+if (response.success) {
+  response.data.transactions.forEach(txn => {
+    console.log(`${txn.type}: $${txn.amount / 100} - ${txn.status}`);
+  });
+  
+  console.log(`Page ${response.data.pagination.page} of ${response.data.pagination.totalPages}`);
+}
+```
+
+```javascript JavaScript
+const response = await getPaymentHistory({ page: 1, limit: 10 });
+
+response.data.transactions.forEach(txn => {
+  console.log(`${txn.createdAt}: ${txn.type} - ${txn.status}`);
+});
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    'https://api.quickleap.io/payment/history',
+    headers={'Authorization': f'Bearer {token}'},
+    params={'page': 1, 'limit': 20}
+)
+
+data = response.json()
+for txn in data['data']['transactions']:
+    print(f"{txn['type']}: ${txn['amount']/100:.2f} - {txn['status']}")
+```
+
+```bash cURL
+curl "https://api.quickleap.io/payment/history?page=1&limit=10" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+</CodeGroup>
+
+### Response example
+
+```json
+{
+  "success": true,
+  "data": {
+    "transactions": [
+      {
+        "id": "txn_abc123",
+        "userId": "user_123",
+        "subscriptionId": "sub_456",
+        "planId": "plan_pro",
+        "provider": "stripe",
+        "providerTransactionId": "pi_xyz789",
+        "type": "payment",
+        "status": "succeeded",
+        "amount": 2900,
+        "currency": "usd",
+        "taxAmount": 290,
+        "paidAt": "2024-01-15T10:30:00Z",
+        "receiptUrl": "https://pay.stripe.com/receipts/...",
+        "invoiceUrl": "https://invoice.stripe.com/i/...",
+        "plan": {
+          "id": "plan_pro",
+          "name": "Professional",
+          "pricing": {
+            "amount": 2900,
+            "currency": "usd",
+            "interval": "month"
+          }
+        },
+        "createdAt": "2024-01-15T10:25:00Z"
+      }
+    ],
+    "pagination": {
+      "total": 45,
+      "page": 1,
+      "limit": 10,
+      "totalPages": 5
+    }
+  },
+  "message": "Payment history retrieved successfully"
+}
+```
+
+## Get billing summary
+
+Retrieve a comprehensive billing summary including current plan, subscription status, recent transactions, and usage statistics.
+
+```typescript
+getBillingSummary(): Promise<BillingSummaryResponse>
+```
+
+**Route:** `GET /payment/billing`
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Whether the request was successful
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  <Expandable title="properties">
+    <ResponseField name="currentPlan" type="Plan">
+      Current plan details including name, pricing, limits, and features
+    </ResponseField>
+    
+    <ResponseField name="subscription" type="object | null">
+      Current subscription summary
+      
+      <Expandable title="subscription properties">
+        <ResponseField name="id" type="string">
+          Subscription ID
+        </ResponseField>
+        
+        <ResponseField name="status" type="string">
+          Subscription status
+        </ResponseField>
+        
+        <ResponseField name="currentPeriodEnd" type="string">
+          When current billing period ends
+        </ResponseField>
+        
+        <ResponseField name="cancelAtPeriodEnd" type="boolean">
+          Whether subscription will cancel at period end
+        </ResponseField>
+        
+        <ResponseField name="isTrialing" type="boolean">
+          Whether in trial period
+        </ResponseField>
+        
+        <ResponseField name="trialEnd" type="string | null">
+          When trial period ends
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+    
+    <ResponseField name="recentTransactions" type="Transaction[]">
+      Most recent 5 transactions
+    </ResponseField>
+    
+    <ResponseField name="usageStats" type="object">
+      <Expandable title="properties">
+        <ResponseField name="redirectsUsed" type="number">
+          Number of redirects currently active
+        </ResponseField>
+        
+        <ResponseField name="totalAnalyticsEvents" type="number">
+          Total analytics hits this billing period
+        </ResponseField>
+        
+        <ResponseField name="lastUsageUpdate" type="string">
+          When usage stats were last updated
+        </ResponseField>
+      </Expandable>
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Example
+
+<CodeGroup>
+
+```typescript TypeScript
+import { getBillingSummary } from '@/lib/api/payment';
+
+const response = await getBillingSummary();
+
+if (response.success) {
+  const { currentPlan, subscription, usageStats } = response.data;
+  
+  console.log(`Plan: ${currentPlan.name}`);
+  console.log(`Redirects: ${usageStats.redirectsUsed}/${currentPlan.limits.maxRedirects}`);
+  console.log(`Analytics: ${usageStats.totalAnalyticsEvents}`);
+  
+  if (subscription) {
+    console.log(`Status: ${subscription.status}`);
+    console.log(`Renewal: ${subscription.currentPeriodEnd}`);
+  }
+}
+```
+
+```javascript JavaScript
+const response = await getBillingSummary();
+const { currentPlan, usageStats } = response.data;
+
+console.log('Billing Summary:', {
+  plan: currentPlan.name,
+  usage: `${usageStats.redirectsUsed}/${currentPlan.limits.maxRedirects}`,
+  events: usageStats.totalAnalyticsEvents
+});
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    'https://api.quickleap.io/payment/billing',
+    headers={'Authorization': f'Bearer {token}'}
+)
+
+data = response.json()
+if data['success']:
+    plan = data['data']['currentPlan']
+    usage = data['data']['usageStats']
+    print(f"Plan: {plan['name']}")
+    print(f"Redirects: {usage['redirectsUsed']}/{plan['limits']['maxRedirects']}")
+```
+
+</CodeGroup>
+
+## Transaction types
+
+- **payment** - Regular subscription charges
+- **refund** - Refunded amounts
+- **subscription_cycle** - Recurring billing cycle charges
+- **setup_fee** - One-time setup charges
+
+## Transaction statuses
+
+- **succeeded** - Payment processed successfully
+- **failed** - Payment failed (card declined, insufficient funds, etc.)
+- **pending** - Payment is being processed
+- **refunded** - Payment was fully refunded
+- **partially_refunded** - Part of the payment was refunded
+
+<Info>
+All monetary amounts are returned in the smallest currency unit (e.g., cents for USD). Divide by 100 to get the dollar amount.
+</Info>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Manage subscription" icon="credit-card" href="/api/payment/subscription">
+    View and manage subscriptions
+  </Card>
+  
+  <Card title="Create checkout" icon="cart-shopping" href="/api/payment/checkout">
+    Subscribe to a plan
+  </Card>
+</CardGroup>

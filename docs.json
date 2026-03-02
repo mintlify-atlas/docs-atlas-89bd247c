@@ -38,6 +38,7 @@
               "features/analytics",
               "features/rules",
               "features/custom-domains",
+              "features/billing",
               "features/security"
             ]
           },
@@ -91,6 +92,14 @@
               "api/rules/update",
               "api/rules/delete",
               "api/rules/test"
+            ]
+          },
+          {
+            "group": "Payment & Billing",
+            "pages": [
+              "api/payment/checkout",
+              "api/payment/subscription",
+              "api/payment/history"
             ]
           }
         ]
