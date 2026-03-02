@@ -1,0 +1,130 @@
+{
+  "projectType": "saas",
+  "projectName": "Quickleap",
+  "projectDescription": "Professional domain redirect service with advanced analytics, custom rules, and HTTPS support for effortless traffic management.",
+  "theme": "palm",
+  "primaryColor": "#0EA5E9",
+  "lightColor": "#38BDF8",
+  "darkColor": "#0284C7",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "setup"
+            ]
+          },
+          {
+            "group": "Core Features",
+            "pages": [
+              "features/redirects",
+              "features/analytics",
+              "features/rules",
+              "features/custom-domains",
+              "features/security"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/best-practices",
+              "guides/use-cases",
+              "guides/troubleshooting"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "api/overview",
+              "api/authentication"
+            ]
+          },
+          {
+            "group": "Redirects",
+            "pages": [
+              "api/redirects/create",
+              "api/redirects/list",
+              "api/redirects/update",
+              "api/redirects/delete",
+              "api/redirects/verify"
+            ]
+          },
+          {
+            "group": "Analytics",
+            "pages": [
+              "api/analytics/overview",
+              "api/analytics/basic-stats",
+              "api/analytics/time-series",
+              "api/analytics/geographic",
+              "api/analytics/devices",
+              "api/analytics/referrers"
+            ]
+          },
+          {
+            "group": "Rules",
+            "pages": [
+              "api/rules/overview",
+              "api/rules/create",
+              "api/rules/list",
+              "api/rules/update",
+              "api/rules/delete",
+              "api/rules/test"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Resources",
+        "groups": [
+          {
+            "group": "Support",
+            "pages": [
+              "resources/pricing",
+              "resources/faq",
+              "resources/support"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Domain redirect management with automatic HTTPS",
+    "Comprehensive traffic analytics and insights",
+    "Advanced conditional redirect rules engine",
+    "Custom domain support",
+    "A/B testing and percentage-based redirects",
+    "Path and query parameter forwarding",
+    "Geographic and device-based targeting",
+    "Real-time analytics dashboard",
+    "RESTful API integration"
+  ],
+  "publicApiSurface": [
+    "addRedirect(data: AddRedirectProps)",
+    "updateRedirect(data: UpdateRedirectProps)",
+    "getUserRedirects()",
+    "deleteRedirect(id: string)",
+    "verifyStatus(domain: string)",
+    "getBasicStats(redirectId: string, params?)",
+    "getHitsOverTime(redirectId: string, params?)",
+    "getGeographicData(redirectId: string, params?)",
+    "getDeviceInfo(redirectId: string, params?)",
+    "getReferrerData(redirectId: string, params?)",
+    "createRule(redirectId: string, data: CreateRuleData)",
+    "getRulesForRedirect(redirectId: string)",
+    "updateRule(ruleId: string, data: UpdateRuleData)",
+    "deleteRule(ruleId: string)",
+    "testRuleEvaluation(redirectId: string, data: RuleTestRequest)",
+    "getRuleAnalytics(redirectId: string)"
+  ]
+}
